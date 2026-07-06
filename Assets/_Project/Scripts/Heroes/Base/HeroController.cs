@@ -1,0 +1,312 @@
+using Unity.Netcode;
+using UnityEngine;
+using UnityEngine.InputSystem; // Project is set to "Input System Package (New)" only.
+using CBuilding.Core;
+using CBuilding.Data;
+using CBuilding.Utilities;
+
+namespace CBuilding.Heroes
+{
+    /// <summary>
+    /// Networked player controller.
+    ///
+    /// SPLIT OF RESPONSIBILITIES (the core NGO discipline):
+    ///   OWNER (IsOwner)  : reads input, moves locally (ClientNetworkTransform replicates),
+    ///                      computes aim + 8-dir facing, REQUESTS combat via ServerRpc.
+    ///   SERVER (IsServer): validates and executes combat (cooldowns, hit detection, damage).
+    ///   ALL CLIENTS      : receive presentation via ClientRpcs / NetworkVariable callbacks.
+    ///
+    /// TRAFFIC BUDGET: movement rides on NetworkTransform deltas; facing is a 1-byte
+    /// NetworkVariable that only syncs when the sector changes; attacks are one small
+    /// ServerRpc per swing. Nothing here sends per-frame RPCs.
+    /// </summary>
+    [RequireComponent(typeof(CharacterController))]
+    public class HeroController : BaseHero
+    {
+        private const float Gravity = -25f;
+
+        [Header("Scene References")]
+        [SerializeField] private Camera isoCamera;
+        [SerializeField] private IsometricSprite8Dir spriteDirection;
+
+        [Header("Basic Attack Hitbox")]
+        [SerializeField] private float attackRadius = 0.9f;
+
+        [Header("Roll (GDD: Shift dash)")]
+        [SerializeField] private float rollDuration = 0.25f;
+
+        [Header("Skill 1 — Synergy AoE (Guardian heal demo, Module 3)")]
+        [Tooltip("Networked AoE prefab (AreaOfEffectNetworked + NetworkObject), registered in Network Prefabs.")]
+        [SerializeField] private NetworkObject synergyAoePrefab;
+        [SerializeField] private float skill1Cooldown = 8f;
+        [SerializeField] private float skill1CastRange = 6f;
+
+        public Vector3 AimPoint { get; private set; }
+        public Vector3 AimDirection { get; private set; } = Vector3.forward;
+
+        // Facing replication: owner computes the sector and writes; everyone else reads.
+        // 1 byte, delta-synced only on sector change — vastly cheaper than syncing the aim vector.
+        private readonly NetworkVariable<byte> _netFacing = new(
+            (byte)FacingDirection8.S,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Owner);
+
+        private CharacterController _controller;
+        private Vector3 _moveInputWorld;
+        private float _verticalVelocity;
+        private float _rollTimeRemaining;
+        private Vector3 _rollDirection;
+
+        // Cooldown gates: the local one is UX (don't spam RPCs); the SERVER one is law.
+        private float _localNextAttackTime;
+        private float _serverNextAttackTime;
+        private float _localNextSkill1Time;
+        private float _serverNextSkill1Time;
+
+        private static readonly Collider[] HitBuffer = new Collider[16];
+
+        protected override void Awake()
+        {
+            base.Awake();
+            _controller = GetComponent<CharacterController>();
+            if (isoCamera == null) isoCamera = Camera.main;
+        }
+
+        public override void OnNetworkSpawn()
+        {
+            base.OnNetworkSpawn();
+
+            // Remote proxies: no input, no CharacterController physics — ClientNetworkTransform
+            // moves them. Facing arrives through the NetworkVariable callback below.
+            _controller.enabled = IsOwner;
+            enabled = IsOwner || IsServer; // Server keeps Update alive only for its own guards; input is gated by IsOwner.
+
+            _netFacing.OnValueChanged += HandleFacingChanged;
+
+            // OnValueChanged does NOT fire for the initial spawn sync — apply the current
+            // value manually so late joiners see remote heroes facing the right way.
+            if (!IsOwner && spriteDirection != null)
+                spriteDirection.SetDirection((FacingDirection8)_netFacing.Value);
+        }
+
+        public override void OnNetworkDespawn()
+        {
+            base.OnNetworkDespawn();
+            _netFacing.OnValueChanged -= HandleFacingChanged;
+        }
+
+        private void HandleFacingChanged(byte previous, byte current)
+        {
+            // Owner already applied its facing locally this frame — only remotes react here.
+            if (IsOwner || spriteDirection == null) return;
+            spriteDirection.SetDirection((FacingDirection8)current);
+        }
+
+        private void Update()
+        {
+            if (!IsSpawned || !IsOwner || !IsAlive) return;
+
+            ReadMoveInput();
+            UpdateAim();
+            HandleActionInput();
+            ApplyMovement();
+            UpdateFacing();
+        }
+
+        // ---------------------------------------------------------------- Movement (OWNER)
+
+        private void ReadMoveInput()
+        {
+            Keyboard kb = Keyboard.current;
+            if (kb == null) { _moveInputWorld = Vector3.zero; return; }
+
+            Vector2 raw = Vector2.zero;
+            if (kb.wKey.isPressed) raw.y += 1f;
+            if (kb.sKey.isPressed) raw.y -= 1f;
+            if (kb.dKey.isPressed) raw.x += 1f;
+            if (kb.aKey.isPressed) raw.x -= 1f;
+
+            if (raw.sqrMagnitude < 0.01f) { _moveInputWorld = Vector3.zero; return; }
+
+            // Camera-relative isometric basis (flatten + normalize compensates the tilt).
+            Transform cam = isoCamera.transform;
+            Vector3 camForward = cam.forward; camForward.y = 0f; camForward.Normalize();
+            Vector3 camRight   = cam.right;   camRight.y   = 0f; camRight.Normalize();
+
+            _moveInputWorld = (camForward * raw.y + camRight * raw.x).normalized;
+        }
+
+        private void ApplyMovement()
+        {
+            _verticalVelocity = _controller.isGrounded ? -1f : _verticalVelocity + Gravity * Time.deltaTime;
+
+            Vector3 horizontal;
+            if (_rollTimeRemaining > 0f)
+            {
+                _rollTimeRemaining -= Time.deltaTime;
+                horizontal = _rollDirection * Stats.GetStat(StatType.RollSpeed);
+            }
+            else
+            {
+                // SpeedMultiplier is the server-written NetworkVariable — this is how a
+                // Guardian's buff (Module 3) reaches an owner-authoritative movement loop.
+                horizontal = _moveInputWorld * (Stats.GetStat(StatType.MoveSpeed) * SpeedMultiplier);
+            }
+
+            _controller.Move((horizontal + Vector3.up * _verticalVelocity) * Time.deltaTime);
+        }
+
+        public override void PerformRoll(Vector3 direction)
+        {
+            if (_rollTimeRemaining > 0f) return;
+            _rollDirection = direction.sqrMagnitude > 0.01f ? direction.normalized : AimDirection;
+            _rollTimeRemaining = rollDuration;
+            // Roll is owner-authoritative movement — local-only log, zero network traffic.
+            CombatLogManager.LogLocal(DisplayName, "used", "Roll", transform.position);
+        }
+
+        // ---------------------------------------------------------------- Aiming & Facing (OWNER)
+
+        private void UpdateAim()
+        {
+            Mouse mouse = Mouse.current;
+            if (mouse == null || isoCamera == null) return;
+
+            // Mathematical plane at feet height — infinite, collider-free cursor projection.
+            Ray ray = isoCamera.ScreenPointToRay(mouse.position.ReadValue());
+            var groundPlane = new Plane(Vector3.up, new Vector3(0f, transform.position.y, 0f));
+
+            if (groundPlane.Raycast(ray, out float enter))
+            {
+                AimPoint = ray.GetPoint(enter);
+                Vector3 toAim = AimPoint - transform.position;
+                toAim.y = 0f;
+                if (toAim.sqrMagnitude > 0.01f) AimDirection = toAim.normalized;
+            }
+        }
+
+        private void UpdateFacing()
+        {
+            if (spriteDirection == null) return;
+            spriteDirection.SetFacing(AimDirection);              // Immediate local visual.
+            byte sector = (byte)spriteDirection.CurrentDirection; // Replicate the RESULT (1 byte),
+            if (_netFacing.Value != sector) _netFacing.Value = sector; // not the input vector.
+        }
+
+        // ---------------------------------------------------------------- Combat (OWNER -> SERVER)
+
+        private void HandleActionInput()
+        {
+            Mouse mouse = Mouse.current;
+            Keyboard kb = Keyboard.current;
+
+            if (mouse != null && mouse.leftButton.isPressed && Time.time >= _localNextAttackTime)
+            {
+                _localNextAttackTime = Time.time + Stats.GetStat(StatType.AttackCooldown);
+                AttackServerRpc(AimPoint); // Request — the server decides if it actually happens.
+            }
+
+            if (kb != null && kb.qKey.wasPressedThisFrame && Time.time >= _localNextSkill1Time)
+            {
+                _localNextSkill1Time = Time.time + skill1Cooldown;
+                CastSynergyServerRpc(AimPoint);
+            }
+
+            if (kb != null && kb.leftShiftKey.wasPressedThisFrame)
+                PerformRoll(_moveInputWorld);
+        }
+
+        /// <summary>
+        /// [ServerRpc]: owner -> server. Default RequireOwnership=true means NGO itself
+        /// rejects this RPC from anyone but the owner — free anti-spoofing.
+        /// </summary>
+        [ServerRpc]
+        private void AttackServerRpc(Vector3 aimPoint)
+        {
+            if (!IsAlive) return;
+
+            // Server-authoritative cooldown. 0.95 tolerance absorbs clock jitter between the
+            // client's optimistic gate and ours, so legit inputs aren't eaten.
+            if (Time.time < _serverNextAttackTime) return;
+            _serverNextAttackTime = Time.time + Stats.GetStat(StatType.AttackCooldown) * 0.95f;
+
+            PerformBasicAttack(aimPoint);
+        }
+
+        /// <summary>SERVER-side hit detection — runs against the server's world state.</summary>
+        public override void PerformBasicAttack(Vector3 aimPoint)
+        {
+            if (!IsServer) return;
+
+            Vector3 dir = aimPoint - transform.position;
+            dir.y = 0f;
+            dir = dir.sqrMagnitude > 0.01f ? dir.normalized : transform.forward;
+
+            float reach = Stats.GetStat(StatType.AttackRange); // Server ignores the clicked distance — reach is a stat.
+            Vector3 hitboxCenter = transform.position + dir * reach;
+
+            int hitCount = Physics.OverlapSphereNonAlloc(
+                hitboxCenter, attackRadius, HitBuffer, attackableLayers, QueryTriggerInteraction.Collide);
+
+            bool landedHit = false;
+            float damage = Stats.GetStat(StatType.AttackDamage);
+            float knockback = Stats.BaseStats != null ? Stats.BaseStats.KnockbackForce : 0f;
+
+            for (int i = 0; i < hitCount; i++)
+            {
+                IDamageable target = HitBuffer[i].GetComponentInParent<IDamageable>();
+                if (target == null || !target.IsAlive || ReferenceEquals(target, this)) continue;
+
+                Vector3 knockDir = HitBuffer[i].transform.position - transform.position;
+                // Target's TakeDamage runs server-side and broadcasts its own hit-reaction
+                // ClientRpc (flash/hitstop/shake) — see BaseEnemy. No double-juice from here.
+                target.TakeDamage(new DamageInfo(
+                    damage, HitBuffer[i].ClosestPoint(hitboxCenter), knockDir, knockback, gameObject));
+
+                landedHit = true;
+            }
+
+            CombatLogManager.LogAction(DisplayName, "used", "Basic_Attack", transform.position);
+            AttackSwingClientRpc(dir, landedHit);
+        }
+
+        /// <summary>[ClientRpc]: server -> all clients. Presentation only, never game state.</summary>
+        [ClientRpc]
+        private void AttackSwingClientRpc(Vector3 direction, bool landedHit)
+        {
+            // Hook: swing animation / whiff-vs-hit audio. Impact juice (hitstop, shake, flash)
+            // is owned by the VICTIM's hit-reaction RPC so it triggers exactly once.
+        }
+
+        // ---------------------------------------------------------------- Skill 1: Synergy cast (Module 3)
+
+        [ServerRpc]
+        private void CastSynergyServerRpc(Vector3 targetPoint)
+        {
+            if (!IsAlive || synergyAoePrefab == null) return;
+            if (Time.time < _serverNextSkill1Time) return;
+            _serverNextSkill1Time = Time.time + skill1Cooldown * 0.95f;
+
+            // Server clamps the cast point into range — the client's click is a SUGGESTION.
+            Vector3 toTarget = targetPoint - transform.position;
+            toTarget.y = 0f;
+            Vector3 castPos = transform.position + Vector3.ClampMagnitude(toTarget, skill1CastRange);
+
+            NetworkObject aoe = Instantiate(synergyAoePrefab, castPos, Quaternion.identity);
+            if (aoe.TryGetComponent(out CBuilding.Combat.AreaOfEffectNetworked effect))
+                effect.Initialize(DisplayName);
+            aoe.Spawn(true); // Replicates to every client; visuals on the prefab appear everywhere.
+
+            CombatLogManager.LogAction(DisplayName, "casted", "Skill_1", castPos);
+        }
+
+#if UNITY_EDITOR
+        private void OnDrawGizmosSelected()
+        {
+            if (Stats == null || Stats.BaseStats == null) return;
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(transform.position + AimDirection * Stats.BaseStats.AttackRange, attackRadius);
+        }
+#endif
+    }
+}
