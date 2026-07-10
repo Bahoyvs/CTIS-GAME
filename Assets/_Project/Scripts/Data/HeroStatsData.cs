@@ -3,6 +3,18 @@ using UnityEngine;
 namespace CBuilding.Data
 {
     /// <summary>
+    /// GDD class roles — drives HUD class color coding (GS-16):
+    /// Tank = Ironworks/Ug, DPS = Kerem/AP, Controller = Bahadır/Ok, Support = TL/Gobluna.
+    /// </summary>
+    public enum HeroRole : byte
+    {
+        Tank = 0,
+        DPS = 1,
+        Controller = 2,
+        Support = 3
+    }
+
+    /// <summary>
     /// Base stat sheet for a hero. One asset per hero (Kerem.asset, etc.) — treat it like a
     /// read-only DB schema row. Runtime state (current HP, applied modifiers) never lives here;
     /// ScriptableObject assets persist edits made in Play Mode in the Editor, so mutating them
@@ -14,6 +26,8 @@ namespace CBuilding.Data
         [Header("Identity")]
         public string HeroName = "Unnamed Hero";
         [TextArea] public string Description;
+        [Tooltip("GDD class — drives HUD class color coding (GS-16).")]
+        public HeroRole Role = HeroRole.DPS;
 
         [Header("Vitals")]
         [Min(1f)] public float MaxHealth = 100f;

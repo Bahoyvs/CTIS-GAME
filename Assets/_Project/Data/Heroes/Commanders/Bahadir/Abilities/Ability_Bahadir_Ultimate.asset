@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4d5e6f708192a3b4c5d6e7f80912233, type: 3}
+  m_Name: Ability_Bahadir_Ultimate
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Heroes.Bahadir.BahadirUltimateDataSO
+  abilityId: Ability_Bahadir_Ultimate
+  displayName: Ultimate
+  description: Channel + self-root; on completion, newly spawned enemies nearby are Spyware-marked.
+  icon: {fileID: 0}
+  mode: 1
+  cooldown: 60
+  channelDuration: 3
+  maxCharges: 1
+  blockedBySilence: 1
+  selfRootEffect: {fileID: 11400000, guid: 8a4d1c0e8a4d1c0e8a4d1c0e8a4d0005, type: 2}
+  spawnHackMarkEffect: {fileID: 11400000, guid: 8a4d1c0e8a4d1c0e8a4d1c0e8a4d0010, type: 2}
+  spawnHackWindowSeconds: 6
+  infectionRadius: 8

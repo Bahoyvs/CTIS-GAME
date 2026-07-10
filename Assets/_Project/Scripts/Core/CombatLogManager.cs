@@ -71,6 +71,14 @@ namespace CBuilding.Core
             else Debug.Log($"[Offline] {msg}");
         }
 
+        /// <summary>
+        /// Log a status effect application. Call from SERVER-side code.
+        /// </summary>
+        public static void LogEffect(string actorName, string effectName, Vector3 worldPos)
+        {
+            LogAction(actorName, "got effect", effectName, worldPos);
+        }
+
         private static string Format(string actorName, string verb, string detail, Vector3 pos)
             => $"{actorName} {verb} {detail} at X:{pos.x:F1}, Y:{pos.z:F1}";
 

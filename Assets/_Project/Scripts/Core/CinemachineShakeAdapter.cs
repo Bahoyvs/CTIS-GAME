@@ -1,12 +1,13 @@
 // ---------------------------------------------------------------------------
-// Cinemachine is NOT currently in Packages/manifest.json, so this adapter is
-// compiled out behind a scripting define to keep the project compiling.
+// Cinemachine (com.unity.cinemachine, 3.x) is installed and the CINEMACHINE
+// scripting define is set (Project Settings -> Player -> Scripting Define
+// Symbols, Standalone target) — this adapter compiles and runs.
 //
-// To enable screen shake:
-//   1. Package Manager -> install "Cinemachine" (com.unity.cinemachine, 3.x).
-//   2. Project Settings -> Player -> Scripting Define Symbols -> add: CINEMACHINE
-//   3. Add this component + a CinemachineImpulseSource to your virtual camera
-//      (and a CinemachineImpulseListener on the camera itself).
+// Scene wiring (already done on Main Camera): this component + a
+// CinemachineImpulseSource on the same GameObject that receives the shake
+// (Main Camera), plus a CinemachineExternalImpulseListener so it actually
+// reacts to impulses fired by any source. If you ever see this code compiled
+// out (greyed in the IDE), the CINEMACHINE define got dropped — re-add it.
 // ---------------------------------------------------------------------------
 #if CINEMACHINE
 using UnityEngine;

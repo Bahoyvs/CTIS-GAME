@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88e7cae5e8edd24439a9adbfbc6d48e9, type: 3}
+  m_Name: Ability_SkillTest
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Abilities.Samples.ApplyEffectAbilitySO
+  abilityId: Ability_SkillTest
+  displayName: 
+  description: 
+  icon: {fileID: 0}
+  mode: 0
+  cooldown: 5
+  channelDuration: 0
+  maxCharges: 1
+  blockedBySilence: 1
+  effectToApply: {fileID: 11400000, guid: 34f1c985c26b772489d7105e4a2137f1, type: 2}

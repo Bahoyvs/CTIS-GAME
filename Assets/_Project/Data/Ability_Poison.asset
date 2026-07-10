@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18a28dc17962be44d92109323727a8f6, type: 3}
+  m_Name: Ability_Poison
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Abilities.Delivery.ComposedAbilitySO
+  abilityId: Ability_Poison
+  displayName: 
+  description: 
+  icon: {fileID: 0}
+  mode: 0
+  cooldown: 5
+  channelDuration: 0
+  maxCharges: 1
+  blockedBySilence: 1
+  delivery: {fileID: 11400000, guid: 21a20dcd3e029734b94be2ef3b12a001, type: 2}
+  teamFilter: 0
+  effects:
+  - {fileID: 11400000, guid: a7dd2f8579e348c4e8304327b4f04528, type: 2}
+  - {fileID: 11400000, guid: 8b122a68b77d90746acc7af04d8de379, type: 2}

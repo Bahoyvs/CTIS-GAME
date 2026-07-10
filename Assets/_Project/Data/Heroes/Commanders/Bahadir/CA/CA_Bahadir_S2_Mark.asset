@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18a28dc17962be44d92109323727a8f6, type: 3}
+  m_Name: CA_Bahadir_S2_Mark
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Abilities.Delivery.ComposedAbilitySO
+  abilityId: CA_Bahadir_S2_Mark
+  displayName: Skill2 Mark Shot
+  description:
+  icon: {fileID: 0}
+  mode: 0
+  cooldown: 0
+  channelDuration: 0
+  maxCharges: 1
+  blockedBySilence: 1
+  delivery: {fileID: 11400000, guid: 8a4d1c0e8a4d1c0e8a4d1c0e8a4d001c, type: 2}
+  teamFilter: 0
+  effects:
+  - {fileID: 11400000, guid: 8a4d1c0e8a4d1c0e8a4d1c0e8a4d0010, type: 2}

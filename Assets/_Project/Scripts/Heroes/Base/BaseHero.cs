@@ -42,6 +42,12 @@ namespace CBuilding.Heroes
         public event Action<BaseHero> OnDied;
         public event Action<DamageInfo> OnDamaged;         // Server-only (DamageInfo isn't replicated).
 
+        // GS-16: spawn registry so HUD panels (local HUD, teammate panel) can discover
+        // heroes event-driven on every peer — no scene scans, no polling.
+        public static readonly System.Collections.Generic.List<BaseHero> ActiveHeroes = new();
+        public static event Action<BaseHero> OnHeroSpawned;
+        public static event Action<BaseHero> OnHeroDespawned;
+
         public HeroStatController Stats { get; private set; }
         public float CurrentHealth => _netHealth.Value;
         public float SpeedMultiplier => _netSpeedMultiplier.Value;
@@ -52,10 +58,12 @@ namespace CBuilding.Heroes
             $"Player_{OwnerClientId} ({(Stats != null && Stats.BaseStats != null ? Stats.BaseStats.HeroName : name)})";
 
         private Coroutine _speedBuffRoutine;
+        private DamageModifierPipeline _damagePipeline; // Optional (GS-5.4); auto-added by StatusEffectController.
 
         protected virtual void Awake()
         {
             Stats = GetComponent<HeroStatController>();
+            _damagePipeline = GetComponent<DamageModifierPipeline>();
         }
 
         public override void OnNetworkSpawn()
@@ -72,10 +80,16 @@ namespace CBuilding.Heroes
 
             // Push initial value to freshly-spawned UI (late joiners get current, not max).
             OnHealthChanged?.Invoke(CurrentHealth, Stats.GetStat(StatType.MaxHealth));
+
+            ActiveHeroes.Add(this);
+            OnHeroSpawned?.Invoke(this);
         }
 
         public override void OnNetworkDespawn()
         {
+            ActiveHeroes.Remove(this);
+            OnHeroDespawned?.Invoke(this);
+
             _netHealth.OnValueChanged -= HandleNetHealthChanged;
             if (IsServer && Stats != null) Stats.OnStatChanged -= HandleStatChanged;
         }
@@ -99,7 +113,10 @@ namespace CBuilding.Heroes
             // exists if the server says so.
             if (!IsServer || !IsAlive) return;
 
-            float mitigated = Mathf.Max(0f, info.Amount - Stats.GetStat(StatType.Armor));
+            // GS-5.4: ALL incoming damage runs through the modifier chain (SpywareMark,
+            // Mark of Guilt, Sunburn...) before armor. Never special-case at call sites.
+            float incoming = _damagePipeline != null ? _damagePipeline.Process(in info) : info.Amount;
+            float mitigated = Mathf.Max(0f, incoming - Stats.GetStat(StatType.Armor));
             _netHealth.Value = Mathf.Max(0f, _netHealth.Value - mitigated);
             OnDamaged?.Invoke(info);
 
@@ -130,6 +147,17 @@ namespace CBuilding.Heroes
         public void ServerHeal(float amount)
         {
             if (!IsServer || !IsAlive || amount <= 0f) return;
+
+            // GS-5.4: healing runs through the same modifier chain (anti-heal keys off
+            // DamageFlags.Healing — e.g. Troll's stacking anti-heal).
+            if (_damagePipeline != null)
+            {
+                var healInfo = new DamageInfo(amount, transform.position, Vector3.zero, 0f,
+                    gameObject, DamageFlags.Healing);
+                amount = _damagePipeline.Process(in healInfo);
+                if (amount <= 0f) return;
+            }
+
             _netHealth.Value = Mathf.Min(_netHealth.Value + amount, Stats.GetStat(StatType.MaxHealth));
         }
 

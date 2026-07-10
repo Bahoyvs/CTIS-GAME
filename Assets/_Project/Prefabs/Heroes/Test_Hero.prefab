@@ -14,6 +14,8 @@ GameObject:
   - component: {fileID: 5163642871712801589}
   - component: {fileID: 5064200751929594886}
   - component: {fileID: 3072016564831339104}
+  - component: {fileID: 949760763131854561}
+  - component: {fileID: 8342671590284736125}
   m_Layer: 0
   m_Name: Test_Hero
   m_TagString: Untagged
@@ -55,7 +57,7 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 0.4
+  m_Height: 0.96
   m_Radius: 0.17
   m_SlopeLimit: 45
   m_StepOffset: 0.3
@@ -87,7 +89,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1699291000
+  GlobalObjectIdHash: 2475077459
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -170,6 +172,38 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!114 &949760763131854561
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5919461068272317267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: abfffaae97abc2a4d9697c768816e3b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Abilities.AbilityController
+  ShowTopMostFoldoutHeaderGroup: 1
+  feature: {fileID: 0}
+  passive: {fileID: 0}
+  finalPassive: {fileID: 0}
+  skill1: {fileID: 11400000, guid: f8dc7e6504c8cc6479a393e369fef4f8, type: 2}
+  skill2: {fileID: 0}
+  ultimate: {fileID: 0}
+--- !u!114 &8342671590284736125
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5919461068272317267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c3e91a5b8d24f1e9a6c3d5f2b8e4a71, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Core.CameraModeController
+  ownedPriority: 20
 --- !u!1 &7017064909612548309
 GameObject:
   m_ObjectHideFlags: 0
@@ -253,7 +287,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 892173734, guid: 0a1511f5c476f8a4c9aca20899fb86ad, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -280,14 +314,14 @@ MonoBehaviour:
   animator: {fileID: 0}
   spriteRenderer: {fileID: 4585818337916842098}
   directionSprites:
-  - {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
-  - {fileID: 10901, guid: 0000000000000000f000000000000000, type: 0}
-  - {fileID: 10915, guid: 0000000000000000f000000000000000, type: 0}
-  - {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
-  - {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
-  - {fileID: 10917, guid: 0000000000000000f000000000000000, type: 0}
-  - {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  - {fileID: 0}
+  - {fileID: 266483145, guid: 0a1511f5c476f8a4c9aca20899fb86ad, type: 3}
+  - {fileID: 1489971764, guid: 0a1511f5c476f8a4c9aca20899fb86ad, type: 3}
+  - {fileID: 1489971764, guid: 0a1511f5c476f8a4c9aca20899fb86ad, type: 3}
+  - {fileID: 1489971764, guid: 0a1511f5c476f8a4c9aca20899fb86ad, type: 3}
+  - {fileID: 892173734, guid: 0a1511f5c476f8a4c9aca20899fb86ad, type: 3}
+  - {fileID: 1658454888, guid: 0a1511f5c476f8a4c9aca20899fb86ad, type: 3}
+  - {fileID: 1658454888, guid: 0a1511f5c476f8a4c9aca20899fb86ad, type: 3}
+  - {fileID: 1658454888, guid: 0a1511f5c476f8a4c9aca20899fb86ad, type: 3}
 --- !u!114 &6217065538934414449
 MonoBehaviour:
   m_ObjectHideFlags: 0

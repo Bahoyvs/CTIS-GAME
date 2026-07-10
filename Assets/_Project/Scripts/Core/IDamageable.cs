@@ -1,7 +1,29 @@
+using System;
 using UnityEngine;
 
 namespace CBuilding.Core
 {
+    /// <summary>
+    /// GS-5.4 — classification flags carried by every hit/heal so IDamageModifier
+    /// implementations (anti-heal, SpywareMark, Mark of Guilt, Sunburn...) can key
+    /// off them without special-case code at damage call sites.
+    /// </summary>
+    [Flags]
+    public enum DamageFlags
+    {
+        None = 0,
+        /// <summary>Positive amount restores HP. Anti-heal modifiers key off this flag.</summary>
+        Healing = 1 << 0,
+        /// <summary>Damage-over-time tick from a status effect (GS-5). Usually no knockback/hitstun.</summary>
+        DoT = 1 << 1,
+        /// <summary>Environmental hazard source (GS-7).</summary>
+        Hazard = 1 << 2,
+        /// <summary>Ability-sourced (GS-9).</summary>
+        Ability = 1 << 3,
+        /// <summary>Skips the IDamageModifier chain (reserved for scripted kills; use sparingly).</summary>
+        BypassModifiers = 1 << 4,
+    }
+
     /// <summary>
     /// Payload describing a single hit. Passed by 'in' reference (readonly struct)
     /// to avoid GC allocations in hot combat paths.
@@ -13,9 +35,13 @@ namespace CBuilding.Core
         public readonly Vector3 KnockbackDirection;  // Normalized, XZ plane
         public readonly float KnockbackForce;
         public readonly GameObject Instigator;       // Who dealt the damage
+        public readonly DamageFlags Flags;           // GS-5.4 classification
+
+        public bool IsHealing => (Flags & DamageFlags.Healing) != 0;
 
         public DamageInfo(float amount, Vector3 hitPoint, Vector3 knockbackDirection,
-                          float knockbackForce, GameObject instigator)
+                          float knockbackForce, GameObject instigator,
+                          DamageFlags flags = DamageFlags.None)
         {
             Amount = amount;
             HitPoint = hitPoint;
@@ -24,6 +50,7 @@ namespace CBuilding.Core
                 : Vector3.zero;
             KnockbackForce = knockbackForce;
             Instigator = instigator;
+            Flags = flags;
         }
     }
 

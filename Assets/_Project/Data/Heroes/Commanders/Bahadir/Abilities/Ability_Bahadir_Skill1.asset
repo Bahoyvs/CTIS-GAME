@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2b3c4d5e6f708192a3b4c5d6e7f8091, type: 3}
+  m_Name: Ability_Bahadir_Skill1
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Heroes.Bahadir.BahadirSkill1DataSO
+  abilityId: Ability_Bahadir_Skill1
+  displayName: Skill1
+  description: Two-form weapon; double-tap toggles form and mount-rides.
+  icon: {fileID: 0}
+  mode: 0
+  cooldown: 6
+  channelDuration: 0
+  maxCharges: 1
+  blockedBySilence: 1
+  form0Ability: {fileID: 11400000, guid: 8a4d1c0e8a4d1c0e8a4d1c0e8a4d0014, type: 2}
+  form1Ability: {fileID: 11400000, guid: 8a4d1c0e8a4d1c0e8a4d1c0e8a4d0015, type: 2}
+  doubleTapWindow: 0.35
+  mountRideSpeedMultiplier: 1.6
+  mountRideDuration: 1.5
+  chainDamageEffect: {fileID: 11400000, guid: 8a4d1c0e8a4d1c0e8a4d1c0e8a4d0006, type: 2}
+  chainSlowEffect: {fileID: 11400000, guid: 8a4d1c0e8a4d1c0e8a4d1c0e8a4d000c, type: 2}

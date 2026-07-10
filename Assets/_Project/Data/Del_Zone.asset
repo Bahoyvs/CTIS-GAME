@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5984e56d5df9134d85cd69a7c8649d9, type: 3}
+  m_Name: Del_Zone
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Abilities.Delivery.ZoneDeliverySO
+  zonePrefab: {fileID: 7595450592788266301, guid: 16edf7b5aa3323348b45d860fb581332, type: 3}
+  castRange: 2
+  radius: 3
+  duration: 5
+  tickInterval: 1
+  hitLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295

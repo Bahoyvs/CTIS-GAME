@@ -7,6 +7,7 @@ using UnityEngine.AI;
 using CBuilding.Core;
 using CBuilding.Data;
 using CBuilding.Heroes;
+using CBuilding.StatusEffects;
 using CBuilding.Utilities;
 
 namespace CBuilding.Enemies
@@ -64,6 +65,11 @@ namespace CBuilding.Enemies
         public bool IsAlive => _netHealth.Value > 0f;
         public string DisplayName => $"{(data != null ? data.EnemyName : name)}#{NetworkObjectId}";
 
+        // GS-16: read-only surface for the world-space HP billboard (EnemyWorldUI).
+        // The UI subscribes to NetHealth.OnValueChanged — never polls.
+        public NetworkVariable<float> NetHealth => _netHealth;
+        public float MaxHealth => data != null ? data.MaxHealth : 1f;
+
         protected NavMeshAgent Agent { get; private set; }
         protected BaseHero CurrentTarget { get; private set; }
         protected EnemyState State { get; private set; } = EnemyState.Idle;
@@ -74,6 +80,7 @@ namespace CBuilding.Enemies
         private float _nextAttackTime;
         private float _stunEndTime;
         private Coroutine _flashRoutine;
+        private GameObject _lastDamageInstigator; // GS-9: Bahadır Final Passive needs "who landed the kill".
 
         private MaterialPropertyBlock _mpb;
         private static readonly int ColorProp = Shader.PropertyToID("_Color");
@@ -81,10 +88,13 @@ namespace CBuilding.Enemies
 
         // ---------------------------------------------------------------- Lifecycle
 
+        private DamageModifierPipeline _damagePipeline; // Optional (GS-5.4).
+
         protected virtual void Awake()
         {
             Agent = GetComponent<NavMeshAgent>();
             _mpb = new MaterialPropertyBlock();
+            _damagePipeline = GetComponent<DamageModifierPipeline>();
         }
 
         public override void OnNetworkSpawn()
@@ -113,6 +123,8 @@ namespace CBuilding.Enemies
             _netHealth.Value = data.MaxHealth;
             Agent.speed = data.MoveSpeed;
             Agent.stoppingDistance = data.AttackRange * 0.9f;
+
+            EnemySpawnHooks.RaiseSpawned(this); // GS-9: Bahadır Ultimate spawn-hack hook.
         }
 
         public override void OnNetworkDespawn()
@@ -195,6 +207,11 @@ namespace CBuilding.Enemies
                 _threatByClientId.TryGetValue(client.ClientId, out float threat);
                 if (threat <= 0f && dist > data.AggroRange) continue;
 
+                // GS-9 (Bahadır Feature): stealth hides from fresh targeting; a stealthed
+                // hero who has already drawn threat still gets chased (stealth isn't a reset).
+                if (threat <= 0f && hero.TryGetComponent<StatusEffectController>(out var heroStatus)
+                    && heroStatus.IsStealthed) continue;
+
                 float score = dist - threat * threatWeight;
                 if (score < bestScore)
                 {
@@ -275,28 +292,39 @@ namespace CBuilding.Enemies
             // server-side (reached via AttackServerRpc). This guard makes the contract explicit.
             if (!IsServer || !IsAlive) return;
 
-            _netHealth.Value = Mathf.Max(0f, _netHealth.Value - info.Amount);
+            // GS-5.4: run the modifier chain (marks, vulnerability effects) before health math.
+            float amount = _damagePipeline != null ? _damagePipeline.Process(in info) : info.Amount;
+
+            _netHealth.Value = Mathf.Max(0f, _netHealth.Value - amount);
             OnDamaged?.Invoke(info);
-            AddThreat(info.Instigator, info.Amount); // Damage = aggro.
+            AddThreat(info.Instigator, amount); // Damage = aggro.
+            if (info.Instigator != null) _lastDamageInstigator = info.Instigator; // GS-9: last-hit tracking.
 
-            // Server-side reaction: interrupt the brain + physical displacement.
-            _stunEndTime = Time.time + data.HitStunDuration;
-            if (Agent.enabled && Agent.isOnNavMesh)
+            // DoT ticks (GS-5) deal damage only — no hitstun/knockback/hit-flash, otherwise
+            // a poison would stun-lock the AI brain every tick.
+            bool isDoT = (info.Flags & DamageFlags.DoT) != 0;
+
+            if (!isDoT)
             {
-                Agent.isStopped = true;
-                Agent.velocity = Vector3.zero;
-            }
-            if (GameFeelManager.Instance != null)
-            {
-                GameFeelManager.Instance.ApplyKnockback(
-                    Agent, info.KnockbackDirection,
-                    info.KnockbackForce * data.KnockbackResistanceMultiplier);
+                // Server-side reaction: interrupt the brain + physical displacement.
+                _stunEndTime = Time.time + data.HitStunDuration;
+                if (Agent.enabled && Agent.isOnNavMesh)
+                {
+                    Agent.isStopped = true;
+                    Agent.velocity = Vector3.zero;
+                }
+                if (GameFeelManager.Instance != null)
+                {
+                    GameFeelManager.Instance.ApplyKnockback(
+                        Agent, info.KnockbackDirection,
+                        info.KnockbackForce * data.KnockbackResistanceMultiplier);
+                }
             }
 
-            CombatLogManager.LogAction(DisplayName, "took", $"{info.Amount:F0} damage", transform.position);
+            CombatLogManager.LogAction(DisplayName, "took", $"{amount:F0} damage", transform.position);
 
             // One broadcast so every player SEES the impact at the same moment.
-            HitReactionClientRpc(info.HitPoint);
+            if (!isDoT) HitReactionClientRpc(info.HitPoint);
 
             if (_netHealth.Value <= 0f) Die();
         }
@@ -329,6 +357,13 @@ namespace CBuilding.Enemies
             SetState(EnemyState.Dead);
             OnDied?.Invoke(this);
             CombatLogManager.LogAction(DisplayName, "was", "slain", transform.position);
+
+            // GS-9 (Bahadır Final Passive): "an ally landed the kill" — only fires for
+            // hero-sourced kills, never DoT/self/enemy-on-enemy.
+            if (_lastDamageInstigator != null && _lastDamageInstigator.GetComponent<BaseHero>() != null)
+            {
+                TeamEventBus.RaiseAllyKilledEnemy(_lastDamageInstigator, this);
+            }
 
             Agent.enabled = false;
             SetCollidersEnabled(false); // Server-side: corpse stops blocking/receiving hits NOW.
