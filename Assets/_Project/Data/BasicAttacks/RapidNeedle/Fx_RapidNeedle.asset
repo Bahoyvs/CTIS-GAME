@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Fx_RapidNeedle
   m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Abilities.Delivery.DamageEffectSO
   appliesTo: 0
-  damage: 1
+  damage: 10
   knockbackForce: 0

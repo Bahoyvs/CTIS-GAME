@@ -569,6 +569,7 @@ GameObject:
   - component: {fileID: 6298030564537120695}
   - component: {fileID: 3780677769202629976}
   - component: {fileID: 2262560022035261099}
+  - component: {fileID: 4704006033893169869}
   m_Layer: 8
   m_Name: Enemy
   m_TagString: Untagged
@@ -627,7 +628,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 548502026
+  GlobalObjectIdHash: 925084905
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -661,6 +662,7 @@ MonoBehaviour:
   spriteDirection: {fileID: 2422253476504275534}
   onHitShakeIntensity: 0
   deathDespawnDelay: 2
+  spawnEntryDuration: 1.2
   retargetInterval: 0.5
   threatWeight: 0.15
 --- !u!136 &4867383129749367875
@@ -757,6 +759,50 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 57d5192f16c0a894f9926c90e5723c7d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Core.DamageModifierPipeline
+--- !u!114 &4704006033893169869
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4950403330440671466}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 377e3f220e69712479b581a20be5ea1a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Enemies.Spawning.EnemySpawnEntryPresenter
+  ShowTopMostFoldoutHeaderGroup: 1
+  visualRoot: {fileID: 6911372123399540753}
+  style: 0
+  riseDepth: 2
+  dropHeight: 3
+  ease:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  entryParticles: {fileID: 0}
+  animator: {fileID: 0}
+  animatorTrigger: SpawnEntry
 --- !u!1 &5169859963909424404
 GameObject:
   m_ObjectHideFlags: 0

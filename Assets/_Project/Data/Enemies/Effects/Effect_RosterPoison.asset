@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83db776a7403bad409997791dc19133b, type: 3}
+  m_Name: Effect_RosterPoison
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.StatusEffects.EffectDataSO
+  effectId: Effect_RosterPoison
+  displayName: Weaver Toxin
+  icon: {fileID: 0}
+  isDebuff: 1
+  duration: 4
+  tickInterval: 1
+  stackingPolicy: 2
+  maxStacks: 5
+  controlFlags: 0
+  moveSpeedMultiplier: 1
+  damagePerTick: 4
+  incomingDamageMultiplier: 1
+  incomingHealMultiplier: 1

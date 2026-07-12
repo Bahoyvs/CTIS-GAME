@@ -28,6 +28,7 @@ namespace CBuilding.Abilities
         }
 
         private readonly Dictionary<AbilitySlot, Entry> _entries = new();
+        private readonly Dictionary<AbilitySlot, float> _cooldownOverrides = new();
         private bool _frozen;
 
         /// <summary>(slot, remaining, duration) — fired on start/change so the controller can sync UI.</summary>
@@ -56,10 +57,34 @@ namespace CBuilding.Abilities
         public int GetCharges(AbilitySlot slot) =>
             _entries.TryGetValue(slot, out var e) ? e.Charges : 0;
 
+        /// <summary>
+        /// SHARED API (like ReduceAllActive): while set, every Commit on <paramref name="slot"/>
+        /// uses <paramref name="seconds"/> instead of the duration the caller passed. Lets
+        /// timed modes rewrite a slot's cooldown without mutating the shared AbilityDataSO
+        /// asset. First consumer: Gobluna's Ultimate — Skill1 CD becomes 0.4s for 18s.
+        /// Callers OWN the cleanup: pair every Set with a ClearCooldownOverride.
+        /// </summary>
+        public void SetCooldownOverride(AbilitySlot slot, float seconds)
+        {
+            _cooldownOverrides[slot] = Mathf.Max(0f, seconds);
+        }
+
+        /// <summary>Removes an override set by <see cref="SetCooldownOverride"/> (no-op if none).</summary>
+        public void ClearCooldownOverride(AbilitySlot slot)
+        {
+            _cooldownOverrides.Remove(slot);
+        }
+
         /// <summary>Starts the cooldown (Instant/Channel/Toggle) or consumes a charge (ChargeBased).</summary>
         public void Commit(AbilitySlot slot, float cooldownDuration)
         {
             if (!_entries.TryGetValue(slot, out var e)) return;
+
+            // A mode-driven override (Gobluna Ult) replaces the data-asset duration outright.
+            if (_cooldownOverrides.TryGetValue(slot, out float overrideSeconds))
+            {
+                cooldownDuration = overrideSeconds;
+            }
 
             if (e.MaxCharges > 1)
             {

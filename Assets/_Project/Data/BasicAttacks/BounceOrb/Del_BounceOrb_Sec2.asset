@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28896355a749cd84ca6941b253e36ad4, type: 3}
+  m_Name: Del_BounceOrb_Sec2
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Abilities.Delivery.BounceDeliverySO
+  projectilePrefab: {fileID: 601000000000000005, guid: 60b10a5e000000000000000000000603, type: 3}
+  speed: 12
+  maxRange: 10
+  maxBounces: 4
+  bounceRadius: 5
+  allowAllyBounce: 0
+  allowSelfBounce: 1
+  allowWallBounce: 0
+  wallLayers:
+    serializedVersion: 2
+    m_Bits: 64
+  hitLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295

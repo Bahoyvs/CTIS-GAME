@@ -43,6 +43,12 @@ namespace CBuilding.Enemies
         [SerializeField] private float onHitShakeIntensity = 0.4f;
         [SerializeField] private float deathDespawnDelay = 2f;
 
+        [Header("Spawn Entry")]
+        [Tooltip("Seconds spent in the Spawning state after (re)spawn: untargetable, " +
+                 "invulnerable and immobile while the entry presentation plays " +
+                 "(EnemySpawnEntryPresenter). 0 = active instantly, no entry phase.")]
+        [Min(0f)] [SerializeField] private float spawnEntryDuration = 1.2f;
+
         [Header("Targeting")]
         [Tooltip("How often the server re-evaluates who to chase (seconds).")]
         [SerializeField] private float retargetInterval = 0.5f;
@@ -62,7 +68,21 @@ namespace CBuilding.Enemies
             NetworkVariableReadPermission.Everyone,
             NetworkVariableWritePermission.Server);
 
+        // Spawning state: replicated so clients drive the entry presentation locally with
+        // ZERO extra RPC traffic — the initial value rides along in the spawn payload.
+        private readonly NetworkVariable<bool> _netIsSpawning = new(
+            false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
         public bool IsAlive => _netHealth.Value > 0f;
+
+        /// <summary>True while the entry phase runs (untargetable/invulnerable/immobile). All peers.</summary>
+        public bool IsSpawning => _netIsSpawning.Value;
+
+        /// <summary>Read-only surface for EnemySpawnEntryPresenter (subscribe, never poll).</summary>
+        public NetworkVariable<bool> NetIsSpawning => _netIsSpawning;
+
+        /// <summary>Entry phase length — presenter reads it so gameplay and visuals always agree.</summary>
+        public float SpawnEntryDuration => spawnEntryDuration;
         public string DisplayName => $"{(data != null ? data.EnemyName : name)}#{NetworkObjectId}";
 
         // GS-16: read-only surface for the world-space HP billboard (EnemyWorldUI).
@@ -79,6 +99,7 @@ namespace CBuilding.Enemies
         private float _nextRetargetTime;
         private float _nextAttackTime;
         private float _stunEndTime;
+        private float _spawnEntryEndTime;
         private Coroutine _flashRoutine;
         private GameObject _lastDamageInstigator; // GS-9: Bahadır Final Passive needs "who landed the kill".
 
@@ -89,23 +110,31 @@ namespace CBuilding.Enemies
         // ---------------------------------------------------------------- Lifecycle
 
         private DamageModifierPipeline _damagePipeline; // Optional (GS-5.4).
+        private StatusEffectController _statusEffects;  // Optional (GS-5.2); null-safe everywhere.
 
         protected virtual void Awake()
         {
             Agent = GetComponent<NavMeshAgent>();
             _mpb = new MaterialPropertyBlock();
             _damagePipeline = GetComponent<DamageModifierPipeline>();
+            _statusEffects = GetComponent<StatusEffectController>();
         }
 
         public override void OnNetworkSpawn()
         {
             _netFacing.OnValueChanged += HandleFacingChanged;
+            _netIsSpawning.OnValueChanged += HandleSpawningChanged;
 
             if (!IsServer)
             {
                 // Clients are dumb terminals for enemies: kill the local simulation so the
                 // agent can't fight the incoming NetworkTransform positions.
                 Agent.enabled = false;
+
+                // Pooled reuse: restore the pristine look, and mirror the untargetable
+                // window — colliders stay off while the entry presentation plays.
+                SetCollidersEnabled(!_netIsSpawning.Value);
+                ResetPresentation();
 
                 // Initial-sync facing (OnValueChanged doesn't fire for the spawn value).
                 if (spriteDirection != null)
@@ -120,6 +149,8 @@ namespace CBuilding.Enemies
                 return;
             }
 
+            ResetServerState(); // Pool-safe: full runtime reset EVERY life, not just the first.
+
             _netHealth.Value = data.MaxHealth;
             Agent.speed = data.MoveSpeed;
             Agent.stoppingDistance = data.AttackRange * 0.9f;
@@ -130,6 +161,81 @@ namespace CBuilding.Enemies
         public override void OnNetworkDespawn()
         {
             _netFacing.OnValueChanged -= HandleFacingChanged;
+            _netIsSpawning.OnValueChanged -= HandleSpawningChanged;
+        }
+
+        /// <summary>Clients mirror the untargetable window; the server toggles explicitly.</summary>
+        private void HandleSpawningChanged(bool previous, bool current)
+        {
+            if (IsServer) return;
+            SetCollidersEnabled(!current);
+        }
+
+        /// <summary>
+        /// Server-side runtime reset for NetworkEnemyPool reuse. A pooled instance keeps its
+        /// dead-state fields between lives (Dead state, disabled agent/colliders, threat
+        /// table, timers) — everything must return to factory settings before the new life.
+        /// Safe on the first life too (everything is already default).
+        /// </summary>
+        protected virtual void ResetServerState()
+        {
+            enabled = true;
+            ResetPresentation();
+
+            CurrentTarget = null;
+            _threatByClientId.Clear();
+            _lastDamageInstigator = null;
+            _nextRetargetTime = 0f;
+            _nextAttackTime = 0f;
+            _stunEndTime = 0f;
+
+            State = EnemyState.Idle; // Direct write: skip SetState's same-state guard vs Dead.
+
+            if (spawnEntryDuration > 0f)
+            {
+                // Enter the Spawning state: untargetable (colliders off), invulnerable
+                // (TakeDamage early-out), immobile (agent off). EndSpawnEntry() activates.
+                _spawnEntryEndTime = Time.time + spawnEntryDuration;
+                _netIsSpawning.Value = true;
+                Agent.enabled = false;
+                SetCollidersEnabled(false);
+            }
+            else
+            {
+                _netIsSpawning.Value = false;
+                ActivateAgentAndColliders();
+            }
+        }
+
+        /// <summary>Server-only. Spawning → active: the enemy becomes real to the world.</summary>
+        private void EndSpawnEntry()
+        {
+            _netIsSpawning.Value = false;
+            ActivateAgentAndColliders();
+            _nextRetargetTime = 0f; // Wake up with a fresh target scan this frame.
+        }
+
+        private void ActivateAgentAndColliders()
+        {
+            SetCollidersEnabled(true);
+            Agent.enabled = true;
+            if (!Agent.isOnNavMesh) Agent.Warp(transform.position);
+            if (Agent.isOnNavMesh)
+            {
+                Agent.isStopped = true;
+                Agent.velocity = Vector3.zero;
+            }
+        }
+
+        /// <summary>Clears any leftover hit-flash tint (runs on server and clients).</summary>
+        private void ResetPresentation()
+        {
+            if (_flashRoutine != null)
+            {
+                StopCoroutine(_flashRoutine);
+                _flashRoutine = null;
+            }
+            if (bodyRenderer != null) bodyRenderer.SetPropertyBlock(null);
         }
 
         private void HandleFacingChanged(byte previous, byte current)
@@ -142,7 +248,28 @@ namespace CBuilding.Enemies
         {
             // THE Module-4 rule: the brain runs nowhere but the server.
             if (!IsServer || State == EnemyState.Dead) return;
+
+            // Spawning state: no brain, no aggro, no movement until the entry finishes.
+            if (_netIsSpawning.Value)
+            {
+                if (Time.time >= _spawnEntryEndTime) EndSpawnEntry();
+                return;
+            }
+
             if (Time.time < _stunEndTime) return; // Hitstun: brain off, knockback still displaces.
+
+            // GS-5 hard-CC (previously a README TODO): a Stun/Freeze status pauses the brain
+            // exactly like hitstun does. First real consumer: Gobluna S2's purge stun —
+            // Bahadır's Fx_Stun gains actual enemy lockdown from this too.
+            if (_statusEffects != null && _statusEffects.IsStunned)
+            {
+                if (Agent.enabled && Agent.isOnNavMesh)
+                {
+                    Agent.isStopped = true;
+                    Agent.velocity = Vector3.zero;
+                }
+                return;
+            }
 
             if (Time.time >= _nextRetargetTime)
             {
@@ -306,11 +433,26 @@ namespace CBuilding.Enemies
 
         // ---------------------------------------------------------------- IDamageable (SERVER)
 
+        /// <summary>
+        /// Server-only direct health write for scripted mechanics (Phoenix-Ghoul rebirth
+        /// egg and similar death-interceptors). Clamped to [0, MaxHealth]. Deliberately
+        /// bypasses the damage pipeline — this is a scripted state change, not a hit.
+        /// </summary>
+        protected void ServerSetHealth(float value)
+        {
+            if (!IsServer) return;
+            _netHealth.Value = Mathf.Clamp(value, 0f, MaxHealth);
+        }
+
         public virtual void TakeDamage(in DamageInfo info)
         {
             // Damage originates from HeroController.PerformBasicAttack, which only runs
             // server-side (reached via AttackServerRpc). This guard makes the contract explicit.
             if (!IsServer || !IsAlive) return;
+
+            // Spawning state = invulnerable. Colliders are off so hits shouldn't even land,
+            // but collider-less damage paths (DoTs applied at spawn, zones) end here too.
+            if (_netIsSpawning.Value) return;
 
             // GS-5.4: run the modifier chain (marks, vulnerability effects) before health math.
             float amount = _damagePipeline != null ? _damagePipeline.Process(in info) : info.Amount;
@@ -319,6 +461,14 @@ namespace CBuilding.Enemies
             OnDamaged?.Invoke(info);
             AddThreat(info.Instigator, amount); // Damage = aggro.
             if (info.Instigator != null) _lastDamageInstigator = info.Instigator; // GS-9: last-hit tracking.
+
+            // GS-9 (Gobluna Siphoner + Green Fire passives): hero-sourced damage is a team
+            // event, mirroring RaiseAllyKilledEnemy in Die(). Post-pipeline amount — passives
+            // that scale with "damage dealt" should see what actually landed.
+            if (amount > 0f && info.Instigator != null && info.Instigator.GetComponent<BaseHero>() != null)
+            {
+                TeamEventBus.RaiseAllyDealtDamage(info.Instigator, gameObject, amount);
+            }
 
             // DoT ticks (GS-5) deal damage only — no hitstun/knockback/hit-flash, otherwise
             // a poison would stun-lock the AI brain every tick.
@@ -402,8 +552,15 @@ namespace CBuilding.Enemies
         private IEnumerator DespawnAfterDelay()
         {
             yield return new WaitForSeconds(deathDespawnDelay);
+
+            // Pool hygiene: expire leftover status effects (marks, DoTs) NOW, so a recycled
+            // instance never wakes up in its next life still carrying old debuffs.
+            if (TryGetComponent<StatusEffectController>(out var status)) status.ClearAll();
             // Despawn(true) destroys on the server and replicates destruction to all clients —
             // the networked replacement for Destroy(gameObject, delay).
+            // POOLING: when NetworkEnemyPool has a handler for this prefab, NGO routes this
+            // "destroy" into the pool on every peer instead — the object is deactivated and
+            // recycled, never actually destroyed. No change needed here.
             if (NetworkObject.IsSpawned) NetworkObject.Despawn(true);
         }
 

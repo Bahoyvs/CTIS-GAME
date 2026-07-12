@@ -16,9 +16,12 @@ namespace CBuilding.Abilities.Delivery
     ///   - Only the IMMEDIATELY PRIOR target is excluded, not full chain history —
     ///     keeps it bouncy rather than deterministic; the bounce cap limits abuse.
     ///
-    /// SECTION TIERS: three assets — S1: allowAlly/Self off; S2/S3: on, with the
-    /// ability's effect list carrying Damage(appliesTo Enemies) + Heal(appliesTo
-    /// AlliesAndSelf) and teamFilter = All so both sides are acquirable.
+    /// SECTION TIERS: three assets — S1 (base): 2 bounces, enemies only. S2: 4
+    /// bounces, adds allowSelfBounce (heals the caster). S3: 5 bounces, adds
+    /// allowAllyBounce (heals allies) and allowWallBounce (caroms off walls
+    /// instead of fizzling). The ability's effect list carries Damage(appliesTo
+    /// Enemies) + Heal(appliesTo AlliesAndSelf) with teamFilter widening to All
+    /// from S2 onward so both sides are acquirable.
     /// </summary>
     [CreateAssetMenu(menuName = "CBuilding/Abilities/Deliveries/Bounce", fileName = "Del_Bounce")]
     public class BounceDeliverySO : AbilityDeliverySO
@@ -32,14 +35,18 @@ namespace CBuilding.Abilities.Delivery
         [Min(0.5f)] public float maxRange = 10f;
 
         [Header("Chain")]
-        [Tooltip("Total targets hit including the first (Bounce Orb cap = 5).")]
-        [Min(1)] public int maxBounces = 3;
+        [Tooltip("Total targets hit including the first (S1 = 2, S2 = 4, S3 = 5).")]
+        [Min(1)] public int maxBounces = 2;
         [Tooltip("Search radius around the current target for the next bounce.")]
         [Min(0.5f)] public float bounceRadius = 5f;
-        [Tooltip("Section 2+: allies become valid bounce targets (heal) once no enemy remains in radius.")]
+        [Tooltip("Section 3: allies become valid bounce targets (heal) once no enemy remains in radius.")]
         public bool allowAllyBounce = false;
-        [Tooltip("Section 3: the caster themself becomes a valid fallback bounce target.")]
+        [Tooltip("Section 2+: the caster themself becomes a valid fallback bounce target (heal).")]
         public bool allowSelfBounce = false;
+        [Tooltip("Section 3: when no living target remains in bounceRadius, the orb may carom off a nearby wall and keep flying instead of fizzling. Wall caroms don't consume a bounce — only landed hits count toward maxBounces.")]
+        public bool allowWallBounce = false;
+        [Tooltip("Collider layers considered 'wall' for the Section 3 wall-bounce fallback.")]
+        public LayerMask wallLayers = 0;
 
         [Header("Physics")]
         public LayerMask hitLayers = ~0;

@@ -144,9 +144,14 @@ namespace CBuilding.Heroes
         // These are the ONLY entry points for other systems (AoE, items, enemy AI) to touch
         // replicated hero state. Public but self-guarding — safe to call from anywhere.
 
-        public void ServerHeal(float amount)
+        /// <summary>
+        /// Returns the HP actually restored (post anti-heal, post overheal-clamp) so callers
+        /// like HealEffectSO can report REAL healing to TeamEventBus.OnAllyHealedAlly —
+        /// Gobluna's Skill2 resource must not fill from overheal spam on full-HP allies.
+        /// </summary>
+        public float ServerHeal(float amount)
         {
-            if (!IsServer || !IsAlive || amount <= 0f) return;
+            if (!IsServer || !IsAlive || amount <= 0f) return 0f;
 
             // GS-5.4: healing runs through the same modifier chain (anti-heal keys off
             // DamageFlags.Healing — e.g. Troll's stacking anti-heal).
@@ -155,10 +160,12 @@ namespace CBuilding.Heroes
                 var healInfo = new DamageInfo(amount, transform.position, Vector3.zero, 0f,
                     gameObject, DamageFlags.Healing);
                 amount = _damagePipeline.Process(in healInfo);
-                if (amount <= 0f) return;
+                if (amount <= 0f) return 0f;
             }
 
+            float before = _netHealth.Value;
             _netHealth.Value = Mathf.Min(_netHealth.Value + amount, Stats.GetStat(StatType.MaxHealth));
+            return _netHealth.Value - before;
         }
 
         public void ServerApplySpeedBuff(float multiplier, float duration)

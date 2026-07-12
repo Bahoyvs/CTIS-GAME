@@ -1,0 +1,112 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f5825665feaf974da984d5c07d494ba, type: 3}
+  m_Name: Enc_Sec4
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Enemies.Spawning.SectionEncounterSO
+  sectionIndex: 4
+  threatCapacity: 26
+  maxAliveEnemies: 40
+  spawnInterval: {x: 1, y: 2.5}
+  regularPool:
+  - prefab: {fileID: 250749210397876975, guid: ed6f981d510d2ee11159f0541bcb206d, type: 3}
+    baseWeight: 10
+    threatCost: 1
+    allowedNodeTypes: 9
+    maxAlive: 0
+    prewarmCount: 10
+  - prefab: {fileID: 250749210397876975, guid: 401c56eab3c470e1f462f6d4a9128efb, type: 3}
+    baseWeight: 6
+    threatCost: 1
+    allowedNodeTypes: 9
+    maxAlive: 0
+    prewarmCount: 6
+  - prefab: {fileID: 250749210397876975, guid: 94725615691100e86294225f60e12207, type: 3}
+    baseWeight: 4
+    threatCost: 2
+    allowedNodeTypes: 1
+    maxAlive: 0
+    prewarmCount: 4
+  - prefab: {fileID: 250749210397876975, guid: 94376b8ae26ec21e1f139d29daa76f46, type: 3}
+    baseWeight: 4
+    threatCost: 1.5
+    allowedNodeTypes: 9
+    maxAlive: 0
+    prewarmCount: 4
+  - prefab: {fileID: 250749210397876975, guid: 6b5a9dae497af8729024f3d90ee34350, type: 3}
+    baseWeight: 4
+    threatCost: 1.5
+    allowedNodeTypes: 9
+    maxAlive: 0
+    prewarmCount: 4
+  - prefab: {fileID: 250749210397876975, guid: 3d9ac157b7f7141cde1ff6a5a303138e, type: 3}
+    baseWeight: 1.5
+    threatCost: 1.5
+    allowedNodeTypes: 9
+    maxAlive: 0
+    prewarmCount: 3
+  - prefab: {fileID: 250749210397876975, guid: ee726eaddec2761f7d48908fbed90fff, type: 3}
+    baseWeight: 1.5
+    threatCost: 1.5
+    allowedNodeTypes: 9
+    maxAlive: 0
+    prewarmCount: 3
+  - prefab: {fileID: 250749210397876975, guid: a0e97c7d5752f5db7c470cbea3953501, type: 3}
+    baseWeight: 1
+    threatCost: 2
+    allowedNodeTypes: 9
+    maxAlive: 2
+    prewarmCount: 2
+  - prefab: {fileID: 250749210397876975, guid: e2e7da0e729b91b21f9a991c3558e3a4, type: 3}
+    baseWeight: 1
+    threatCost: 2
+    allowedNodeTypes: 9
+    maxAlive: 2
+    prewarmCount: 2
+  specialPool:
+  - prefab: {fileID: 250749210397876975, guid: 515845de3a212be53ec3c8c2e50008cd, type: 3}
+    baseWeight: 2
+    threatCost: 4
+    allowedNodeTypes: 9
+    maxAlive: 2
+    prewarmCount: 2
+  - prefab: {fileID: 250749210397876975, guid: ea28c3cbd13b7f3627a6042fedf45755, type: 3}
+    baseWeight: 1.5
+    threatCost: 5
+    allowedNodeTypes: 1
+    maxAlive: 1
+    prewarmCount: 1
+  - prefab: {fileID: 250749210397876975, guid: 6b2194ba97ae697a9011b9f4dfc01113, type: 3}
+    baseWeight: 1
+    threatCost: 8
+    allowedNodeTypes: 1
+    maxAlive: 1
+    prewarmCount: 1
+  - prefab: {fileID: 250749210397876975, guid: 46f341186673ce6b81c337eab57c589c, type: 3}
+    baseWeight: 1
+    threatCost: 5
+    allowedNodeTypes: 9
+    maxAlive: 1
+    prewarmCount: 1
+  specialAttentionThreshold: 80
+  specialCooldown: 25
+  passiveAttentionPerSecond: 1
+  nightAttentionMultiplier: 3
+  eventModifiers: []
+  guiltMarkEffect: {fileID: 0}
+  guiltSpawnEntry:
+    prefab: {fileID: 0}
+    baseWeight: 1
+    threatCost: 1
+    allowedNodeTypes: 1
+    maxAlive: 0
+    prewarmCount: 8
+  guiltSpawnInterval: 12

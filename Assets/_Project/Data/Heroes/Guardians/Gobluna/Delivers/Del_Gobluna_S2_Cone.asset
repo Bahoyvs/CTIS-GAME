@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88afce41dc291604587a0533e5aeba82, type: 3}
+  m_Name: Del_Gobluna_S2_Cone
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Abilities.Delivery.ArcDeliverySO
+  range: 6.5
+  arcAngle: 180
+  hitLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295

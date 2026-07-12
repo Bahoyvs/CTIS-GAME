@@ -137,7 +137,11 @@ namespace CBuilding.Abilities.Delivery
                 AbilityTargeting.ApplyEffects(
                     _ability, root, _caster, Buffer[i].ClosestPoint(transform.position), _caster.transform.position);
 
-                if (--_hitsLeft <= 0)
+                // Only HOSTILE hits consume pierce. With a mixed teamFilter (Gobluna S1:
+                // EnemiesAndAllies) an ally crossing the dart's path is healed in passing —
+                // it must not shorten the dart. Enemies-only abilities are unaffected
+                // (allies never reach this line for them).
+                if (AbilityTargeting.PassesFilter(root, _caster, TeamFilter.Enemies) && --_hitsLeft <= 0)
                 {
                     Detonate();
                     return;

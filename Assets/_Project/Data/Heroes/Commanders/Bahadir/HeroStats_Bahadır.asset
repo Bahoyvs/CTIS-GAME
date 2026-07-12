@@ -15,7 +15,7 @@ MonoBehaviour:
   HeroName: "Bahad\u0131r"
   Description: 
   Role: 2
-  MaxHealth: 100
+  MaxHealth: 1000
   Armor: 0
   MoveSpeed: 6
   RollSpeed: 14

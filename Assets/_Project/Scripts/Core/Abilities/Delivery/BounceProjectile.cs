@@ -6,9 +6,12 @@ using UnityEngine;
 namespace CBuilding.Abilities.Delivery
 {
     /// <summary>
-    /// GS-17 §7.2 — server-simulated bouncing orb (Bounce Orb archetype). Flies
-    /// straight until the first ENEMY contact, then chains per the rec #10 rules
-    /// documented on BounceDeliverySO. Same authority model as AbilityProjectile.
+    /// GS-17 §7.2 — server-simulated bouncing orb (Bounce Orb archetype, the
+    /// shared BasicAttacks/BounceOrb kit). Flies straight until the first ENEMY
+    /// contact, then chains per the rec #10 rules documented on BounceDeliverySO.
+    /// Section 3 adds a wall-carom fallback (see TryWallBounce) so the orb can
+    /// keep hunting instead of fizzling when no living target remains. Same
+    /// authority model as AbilityProjectile.
     ///
     /// PREFAB: this + NetworkObject + NetworkTransform (server-auth) + child visual.
     /// Register in the Network Prefabs list.
@@ -33,6 +36,7 @@ namespace CBuilding.Abilities.Delivery
 
         private GameObject _seekTarget;    // null while in the initial straight flight
         private GameObject _previousTarget; // rec #10: the ONLY excluded candidate
+        private bool _postWallBounce;      // Section 3: true after a wall carom, widens straight-flight contact rules
 
         /// <summary>Server-only. Call BEFORE NetworkObject.Spawn().</summary>
         public void ServerConfigure(ComposedAbilitySO ability, BounceDeliverySO settings,
@@ -74,16 +78,46 @@ namespace CBuilding.Abilities.Delivery
             for (int i = 0; i < count; i++)
             {
                 GameObject root = AbilityTargeting.ResolveRoot(Buffer[i]);
-                if (root == null || root == _caster) continue;
-                // First contact: enemies only — an orb should never open by healing a
-                // full-HP ally it happened to cross (rec #10 priority, applied early).
-                if (!AbilityTargeting.PassesFilter(root, _caster, TeamFilter.Enemies)) continue;
+                if (root == null || root == _previousTarget) continue;
+                if (!_postWallBounce)
+                {
+                    // Very first contact of the whole cast: enemies only — an orb should
+                    // never open by healing a full-HP ally it happened to cross (rec #10
+                    // priority, applied early). Caster is excluded here too (can't open on self).
+                    if (root == _caster) continue;
+                    if (!AbilityTargeting.PassesFilter(root, _caster, TeamFilter.Enemies)) continue;
+                }
+                else
+                {
+                    // Post wall-bounce (Section 3): same acquisition rules as a normal
+                    // bounce — enemies, plus ally/self if this tier allows them.
+                    bool isEnemy = AbilityTargeting.PassesFilter(root, _caster, TeamFilter.Enemies);
+                    if (!isEnemy)
+                    {
+                        bool allyOk = _settings.allowAllyBounce &&
+                                      AbilityTargeting.PassesFilter(root, _caster, TeamFilter.Allies);
+                        bool selfOk = _settings.allowSelfBounce && root == _caster;
+                        if (!allyOk && !selfOk) continue;
+                    }
+                }
 
                 HitAndChain(root);
                 return;
             }
 
-            if (_traveled >= _settings.maxRange) Despawn();
+            if (_traveled >= _settings.maxRange)
+            {
+                // Section 3: ran out of range without a contact — try one more carom
+                // off a nearby wall instead of fizzling outright.
+                if (_settings.allowWallBounce && TryWallBounce(transform.position, out Vector3 newDir))
+                {
+                    _direction = newDir;
+                    _traveled = 0f;
+                    _postWallBounce = true;
+                    return;
+                }
+                Despawn();
+            }
         }
 
         // ---- Phase 2: seek the chosen bounce target ----
@@ -121,10 +155,56 @@ namespace CBuilding.Abilities.Delivery
             if (_bouncesDone >= _settings.maxBounces) { Despawn(); return; }
 
             GameObject next = PickNextTarget(target);
-            if (next == null) { Despawn(); return; }
+            if (next != null)
+            {
+                _previousTarget = target;
+                _seekTarget = next;
+                return;
+            }
 
-            _previousTarget = target;
-            _seekTarget = next;
+            // Section 3: no living target left in radius — carom off a nearby wall
+            // and keep hunting rather than fizzling (wall caroms don't cost a bounce).
+            if (_settings.allowWallBounce && TryWallBounce(target.transform.position, out Vector3 newDir))
+            {
+                _previousTarget = target;
+                _direction = newDir;
+                _traveled = 0f;
+                _postWallBounce = true;
+                _seekTarget = null; // back to straight-flight phase, now hunting post-bounce
+                return;
+            }
+
+            Despawn();
+        }
+
+        /// <summary>Section 3: nearest wall collider in bounceRadius, reflected off its approximate surface normal.</summary>
+        private bool TryWallBounce(Vector3 origin, out Vector3 newDirection)
+        {
+            newDirection = default;
+            int count = Physics.OverlapSphereNonAlloc(
+                origin, _settings.bounceRadius, Buffer, _settings.wallLayers, QueryTriggerInteraction.Collide);
+            if (count == 0) return false;
+
+            Collider nearest = null;
+            float bestDist = float.MaxValue;
+            for (int i = 0; i < count; i++)
+            {
+                Vector3 pt = Buffer[i].ClosestPoint(origin);
+                float d = Vector3.Distance(origin, pt);
+                if (d < bestDist) { bestDist = d; nearest = Buffer[i]; }
+            }
+            if (nearest == null) return false;
+
+            Vector3 closest = nearest.ClosestPoint(origin);
+            Vector3 normal = origin - closest;
+            normal.y = 0f;
+            if (normal.sqrMagnitude < 0.0001f) normal = -_direction; // orb is flush with the surface: bounce straight back
+
+            newDirection = Vector3.Reflect(_direction, normal.normalized);
+            newDirection.y = 0f;
+            if (newDirection.sqrMagnitude < 0.0001f) newDirection = normal;
+            newDirection.Normalize();
+            return true;
         }
 
         /// <summary>Rec #10 in full: enemy priority → closest-to-previous-bounce-point → lowest HP%; excludes only the immediately prior target.</summary>
