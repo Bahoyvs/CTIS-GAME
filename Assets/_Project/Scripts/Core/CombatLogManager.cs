@@ -79,6 +79,80 @@ namespace CBuilding.Core
             LogAction(actorName, "got effect", effectName, worldPos);
         }
 
+        /// <summary>
+        /// Log ability activation. Call from SERVER-side code (AbilityController.ServerTryActivate).
+        /// Includes ability name, mode, and caster position.
+        /// </summary>
+        public static void LogAbilityActivated(string actorName, string abilityName, string mode, Vector3 worldPos)
+        {
+            LogAction(actorName, "activated", $"{abilityName} ({mode})", worldPos);
+        }
+
+        /// <summary>
+        /// Log ability cooldown starting. Call from SERVER-side code.
+        /// Shows ability name and cooldown duration.
+        /// </summary>
+        public static void LogAbilityCooldown(string actorName, string abilityName, float cooldown)
+        {
+            string msg = Format(actorName, "started cooldown on", $"{abilityName} ({cooldown:F1}s)", Vector3.zero);
+            if (Instance == null || !Instance.IsSpawned)
+            {
+                Debug.Log($"[Offline] {msg}");
+                return;
+            }
+
+            Instance.Print(msg);
+            if (Instance.IsServer)
+                Instance.BroadcastLogClientRpc(new FixedString128Bytes(Truncate(msg, 125)));
+        }
+
+        /// <summary>
+        /// Log ability channel start. Call from SERVER-side code.
+        /// Shows ability name and channel duration.
+        /// </summary>
+        public static void LogAbilityChannelStart(string actorName, string abilityName, float duration, Vector3 worldPos)
+        {
+            LogAction(actorName, "started channeling", $"{abilityName} ({duration:F1}s)", worldPos);
+        }
+
+        /// <summary>
+        /// Log ability channel end. Call from SERVER-side code.
+        /// Shows whether channel completed or was interrupted.
+        /// </summary>
+        public static void LogAbilityChannelEnd(string actorName, string abilityName, bool completed, Vector3 worldPos)
+        {
+            string result = completed ? "completed" : "interrupted";
+            LogAction(actorName, $"channel {result}", abilityName, worldPos);
+        }
+
+        /// <summary>
+        /// Log toggle ability state change. Call from SERVER-side code.
+        /// Shows toggle ON or OFF status.
+        /// </summary>
+        public static void LogAbilityToggle(string actorName, string abilityName, bool isOn, Vector3 worldPos)
+        {
+            string state = isOn ? "toggled ON" : "toggled OFF";
+            LogAction(actorName, state, abilityName, worldPos);
+        }
+
+        /// <summary>
+        /// Log ability failure (gating check failed). Call from SERVER-side code.
+        /// Shows reason (silenced, cooldown, charging, etc.).
+        /// </summary>
+        public static void LogAbilityBlocked(string actorName, string abilityName, string reason)
+        {
+            string msg = Format(actorName, "failed to use", $"{abilityName} ({reason})", Vector3.zero);
+            if (Instance == null || !Instance.IsSpawned)
+            {
+                Debug.Log($"[Offline] {msg}");
+                return;
+            }
+
+            Instance.Print(msg);
+            if (Instance.IsServer)
+                Instance.BroadcastLogClientRpc(new FixedString128Bytes(Truncate(msg, 125)));
+        }
+
         private static string Format(string actorName, string verb, string detail, Vector3 pos)
             => $"{actorName} {verb} {detail} at X:{pos.x:F1}, Y:{pos.z:F1}";
 

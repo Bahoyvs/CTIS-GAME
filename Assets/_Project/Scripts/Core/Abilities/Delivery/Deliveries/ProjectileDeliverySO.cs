@@ -27,11 +27,27 @@ namespace CBuilding.Abilities.Delivery
         [Header("Flight")]
         [Min(0.1f)] public float speed = 14f;
         [Min(0.5f)] public float maxRange = 12f;
-        [Tooltip("How many targets one projectile can hit before despawning. 1 = stops on first hit; 99 ≈ full pierce.")]
+        [Tooltip("How many targets one projectile can hit before despawning. 1 = stops on first hit; 99 ≈ full pierce. GS-17's maxPierceHits — 'pierce 1, dissipate on the 2nd hit' = 2. (Kerem basic attack, Pierce Bolt S1→S2.)")]
         [Min(1)] public int pierceCount = 1;
         [Tooltip("If > 0: on each hit (and at max range), also detonate an AoE of this radius.")]
         [Min(0f)] public float explosionRadius = 0f;
         public LayerMask hitLayers = ~0;
+
+        [Header("Walls (GS-17 §7.2 — Pierce Bolt S3)")]
+        [Tooltip("If off, the projectile detonates when it touches wallLayers. On = flies through terrain.")]
+        public bool canPierceWalls = false;
+        [Tooltip("Terrain/obstacle layers that block non-wall-piercing projectiles. None = walls never block (legacy behavior).")]
+        public LayerMask wallLayers = 0;
+
+        [Header("Approach retarget (GS-17 §7.2 / rec #12 — Rapid Needle S3)")]
+        [Tooltip("Cone-limited retarget-on-approach, NOT true homing: the projectile flies straight and only snaps toward a nearby enemy near the END of its path if it is about to miss. Keeps aim meaningful; forgives near-misses.")]
+        public bool retargetOnApproach = false;
+        [Tooltip("Retarget only activates in the last fraction of maxRange (0.25 = final quarter).")]
+        [Range(0.05f, 1f)] public float retargetWindowFraction = 0.25f;
+        [Tooltip("Max angle off the flight direction a snap candidate may sit at.")]
+        [Range(1f, 90f)] public float retargetConeDeg = 30f;
+        [Tooltip("Max distance to a snap candidate.")]
+        [Min(0.1f)] public float retargetRadius = 2.5f;
 
         public override void Execute(in AbilityCastContext ctx)
         {

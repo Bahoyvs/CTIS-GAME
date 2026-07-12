@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CBuilding.StatusEffects.CooldownReductionEffectSO
   effectId: Fx_CooldownReduction
   displayName: Cooldown Pulse
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: a34be0c960d9e7746b4e8cc59f4db15b, type: 3}
   isDebuff: 0
   duration: 0
   tickInterval: 0

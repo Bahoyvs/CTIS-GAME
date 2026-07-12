@@ -17,6 +17,12 @@ namespace CBuilding.Heroes.Bahadir
         {
             var data = (BahadirFeatureDataSO)Data;
             data.buffAbility?.ExecuteDelivery(Controller, Controller.transform.position);
+
+            // Fire one pulse immediately instead of waiting a full tick interval — matters
+            // now that Roll (a ~0.25s dash) is what triggers this (BahadirRollController):
+            // anything already inside the radius the instant Stealth turns on must not
+            // have to wait for the first scheduled tick to get caught.
+            data.passThroughStunAbility?.ExecuteDelivery(Controller, Controller.transform.position);
             _tickTimer = data.passThroughTickInterval;
         }
 

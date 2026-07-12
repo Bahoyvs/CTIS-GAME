@@ -2,10 +2,6 @@ using CBuilding.Abilities;
 using CBuilding.Abilities.Delivery;
 using CBuilding.Enemies;
 using CBuilding.StatusEffects;
-using UnityEngine;
-// BaseHero lives in CBuilding.Heroes — this file's own namespace (CBuilding.Heroes.Bahadir)
-// is a different namespace, so it still needs an explicit using.
-using CBuilding.Heroes;
 
 namespace CBuilding.Heroes.Bahadir
 {
@@ -13,36 +9,15 @@ namespace CBuilding.Heroes.Bahadir
     public class BahadirSkill1Runtime : AbilityRuntime
     {
         private int _currentForm; // 0 = Form0 ("0"), 1 = Form1 ("1")
-        private float _lastPressTime = -999f;
 
+        /// <summary>
+        /// Fires the current form, then flips to the other one for next time — no separate
+        /// toggle input, no timing window, no mount-ride. Simplest possible two-form switch.
+        /// </summary>
         public override void Execute()
         {
-            var data = (BahadirSkill1DataSO)Data;
-            float now = Time.time;
-            bool isDoubleTap = (now - _lastPressTime) <= data.doubleTapWindow;
-            _lastPressTime = now;
-
-            if (isDoubleTap)
-            {
-                ToggleForm();
-                TriggerMountRide(data);
-                return;
-            }
-
-            FireCurrentForm(data);
-        }
-
-        private void ToggleForm() => _currentForm = 1 - _currentForm;
-
-        private void TriggerMountRide(BahadirSkill1DataSO data)
-        {
-            // Bespoke mount-ride movement is out of this doc's scope (GS-9.4, prior doc).
-            // Placeholder: a brief speed burst so the toggle has SOME immediate feel until
-            // the real bespoke state machine lands.
-            if (Controller.TryGetComponent<BaseHero>(out var hero))
-            {
-                hero.ServerApplySpeedBuff(data.mountRideSpeedMultiplier, data.mountRideDuration);
-            }
+            FireCurrentForm((BahadirSkill1DataSO)Data);
+            _currentForm = 1 - _currentForm;
         }
 
         private void FireCurrentForm(BahadirSkill1DataSO data)

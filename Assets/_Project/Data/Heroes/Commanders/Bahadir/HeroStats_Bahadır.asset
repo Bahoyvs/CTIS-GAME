@@ -20,6 +20,6 @@ MonoBehaviour:
   MoveSpeed: 6
   RollSpeed: 14
   AttackDamage: 10
-  AttackCooldown: 0.5
+  AttackCooldown: 0.1
   AttackRange: 1.5
-  KnockbackForce: 6
+  KnockbackForce: 0

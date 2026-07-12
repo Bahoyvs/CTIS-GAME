@@ -22,6 +22,8 @@ namespace CBuilding.Core
         Ability = 1 << 3,
         /// <summary>Skips the IDamageModifier chain (reserved for scripted kills; use sparingly).</summary>
         BypassModifiers = 1 << 4,
+        /// <summary>Melee/contact damage (BaseEnemy.TickAttack). Bahadır's Feature ghost keys off this.</summary>
+        Melee = 1 << 5,
     }
 
     /// <summary>

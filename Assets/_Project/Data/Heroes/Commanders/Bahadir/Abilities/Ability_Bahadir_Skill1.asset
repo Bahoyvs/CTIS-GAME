@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Heroes.Bahadir.BahadirSkill1DataSO
   abilityId: Ability_Bahadir_Skill1
   displayName: Skill1
-  description: Two-form weapon; double-tap toggles form and mount-rides.
-  icon: {fileID: 0}
+  description: Two-form weapon; each cast auto-alternates Form0/Form1.
+  icon: {fileID: 21300000, guid: 875114aca69f563448ce269ac7aa97aa, type: 3}
   mode: 0
   cooldown: 6
   channelDuration: 0
@@ -23,8 +23,5 @@ MonoBehaviour:
   blockedBySilence: 1
   form0Ability: {fileID: 11400000, guid: 8a4d1c0e8a4d1c0e8a4d1c0e8a4d0014, type: 2}
   form1Ability: {fileID: 11400000, guid: 8a4d1c0e8a4d1c0e8a4d1c0e8a4d0015, type: 2}
-  doubleTapWindow: 0.35
-  mountRideSpeedMultiplier: 1.6
-  mountRideDuration: 1.5
   chainDamageEffect: {fileID: 11400000, guid: 8a4d1c0e8a4d1c0e8a4d1c0e8a4d0006, type: 2}
   chainSlowEffect: {fileID: 11400000, guid: 8a4d1c0e8a4d1c0e8a4d1c0e8a4d000c, type: 2}

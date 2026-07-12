@@ -18,8 +18,16 @@ MonoBehaviour:
   radialSpread: 0
   speed: 18
   maxRange: 12
-  pierceCount: 2
+  pierceCount: 1
   explosionRadius: 0
   hitLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 256
+  canPierceWalls: 0
+  wallLayers:
+    serializedVersion: 2
+    m_Bits: 64
+  retargetOnApproach: 0
+  retargetWindowFraction: 0.25
+  retargetConeDeg: 30
+  retargetRadius: 2.5

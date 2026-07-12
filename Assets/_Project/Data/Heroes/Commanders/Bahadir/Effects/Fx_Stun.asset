@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CBuilding.StatusEffects.EffectDataSO
   effectId: Fx_Stun
   displayName: Stun
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 875114aca69f563448ce269ac7aa97aa, type: 3}
   isDebuff: 1
   duration: 1.2
   tickInterval: 0

@@ -24,6 +24,8 @@ namespace CBuilding.Core
         [Header("Default Impact Values")]
         [SerializeField] private float lightHitstopDuration = 0.05f;
         [SerializeField] private float heavyHitstopDuration = 0.12f;
+        [Tooltip("Minimum realtime seconds between hitstops to prevent rapid-fire stuttering.")]
+        [SerializeField] private float hitstopCooldown = 0.5f;
 
         /// <summary>
         /// Screen shake hook. Decoupled via event so this script has no hard Cinemachine
@@ -34,6 +36,7 @@ namespace CBuilding.Core
 
         private Coroutine _hitstopRoutine;
         private float _hitstopEndTime; // Realtime, since timeScale is frozen during hitstop.
+        private float _lastHitstopTime = -1f;
 
         private void Awake()
         {
@@ -62,12 +65,16 @@ namespace CBuilding.Core
         /// <summary>
         /// Freezes Time.timeScale for a few ms. Overlapping requests extend rather than
         /// stack, so mashing attacks can't chain-freeze the game.
+        /// Includes a debounce to prevent rapid-fire hitstutters.
         /// </summary>
         public void DoHitstop(float duration)
         {
+            if (Time.realtimeSinceStartup - _lastHitstopTime < hitstopCooldown) return;
+
             float requestedEnd = Time.realtimeSinceStartup + duration;
             if (requestedEnd <= _hitstopEndTime) return; // Already frozen longer than this.
 
+            _lastHitstopTime = Time.realtimeSinceStartup;
             _hitstopEndTime = requestedEnd;
             if (_hitstopRoutine == null)
                 _hitstopRoutine = StartCoroutine(HitstopRoutine());

@@ -207,10 +207,14 @@ namespace CBuilding.Enemies
                 _threatByClientId.TryGetValue(client.ClientId, out float threat);
                 if (threat <= 0f && dist > data.AggroRange) continue;
 
-                // GS-9 (Bahadır Feature): stealth hides from fresh targeting; a stealthed
-                // hero who has already drawn threat still gets chased (stealth isn't a reset).
-                if (threat <= 0f && hero.TryGetComponent<StatusEffectController>(out var heroStatus)
-                    && heroStatus.IsStealthed) continue;
+                // GS-9 (Bahadır Feature): 100% ghost — stealth ALWAYS hides from targeting,
+                // even if the hero already had threat/aggro on this enemy. (Previously an
+                // already-engaged enemy kept chasing through Stealth; that contradicts
+                // "enemies can't see him." BahadirStealthGuard also force-drops any
+                // CurrentTarget lock the instant Stealth turns on, so this isn't just a
+                // "no NEW target" rule — existing locks break immediately too.)
+                if (hero.TryGetComponent<StatusEffectController>(out var heroStatus) && heroStatus.IsStealthed)
+                    continue;
 
                 float score = dist - threat * threatWeight;
                 if (score < bestScore)
@@ -220,6 +224,21 @@ namespace CBuilding.Enemies
                 }
             }
             return best;
+        }
+
+        /// <summary>
+        /// Server-only. Immediately clears this enemy's target lock if it's currently
+        /// pointed at <paramref name="hero"/> — a no-op otherwise. Used by
+        /// BahadirStealthGuard so "enemies can't see him" takes effect the instant Stealth
+        /// turns on, instead of waiting up to retargetInterval for the next natural
+        /// SelectTarget() re-evaluation (which will also decline to reacquire him — see
+        /// the Stealth check in SelectTarget).
+        /// </summary>
+        public void ForceDropTarget(BaseHero hero)
+        {
+            if (!IsServer || CurrentTarget != hero) return;
+            CurrentTarget = null;
+            SetState(EnemyState.Idle);
         }
 
         private void AddThreat(GameObject instigator, float amount)
@@ -263,7 +282,8 @@ namespace CBuilding.Enemies
             // health NetworkVariable, which replicates to everyone. No RPC needed here.
             Vector3 knockDir = CurrentTarget.transform.position - transform.position;
             CurrentTarget.TakeDamage(new DamageInfo(
-                data.AttackDamage, CurrentTarget.transform.position, knockDir, 2f, gameObject));
+                data.AttackDamage, CurrentTarget.transform.position, knockDir, 2f, gameObject,
+                DamageFlags.Melee));
 
             CombatLogManager.LogAction(DisplayName, "used", $"Melee_Attack on {CurrentTarget.DisplayName}",
                 transform.position);

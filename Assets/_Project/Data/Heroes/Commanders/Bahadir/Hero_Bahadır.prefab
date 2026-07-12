@@ -1,5 +1,120 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2606321103463817129
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5597640315675729839}
+  - component: {fileID: 7754995263663799583}
+  - component: {fileID: 8857128975853223881}
+  m_Layer: 0
+  m_Name: WeaponVisual
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5597640315675729839
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2606321103463817129}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.000000007450581, z: 0.0000004172325}
+  m_LocalScale: {x: 2.31, y: 2.31, z: 2.31}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 1200919854592077566}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &7754995263663799583
+SpriteRenderer:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2606321103463817129}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: 21300000, guid: 6d8d965be6e8043418273e5eaad70c9a, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 0.32, y: 0.32}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_SpriteSortPoint: 0
+  m_BlendShapeWeights: []
+--- !u!114 &8857128975853223881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2606321103463817129}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ecdc9bc352b55d1419e701fa4d4686a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Heroes.WeaponVisualController
+  owner: {fileID: 5064200751929594886}
+  heroBodySprite: {fileID: 4585818337916842098}
+  rotationSpeedDeg: 1080
+  spriteForwardOffset: 0
+  flipHysteresis: 0.08
+  sortHysteresis: 0.08
+  invertNorthSouth: 0
+  recoilDistance: 0.18
+  recoilOutDuration: 0.05
+  recoilReturnDuration: 0.12
 --- !u!1 &5919461068272317267
 GameObject:
   m_ObjectHideFlags: 0
@@ -18,6 +133,13 @@ GameObject:
   - component: {fileID: 8342671590284736125}
   - component: {fileID: 1765939195137080360}
   - component: {fileID: 1727599456228450866}
+  - component: {fileID: 6747822654850046574}
+  - component: {fileID: 3832384037415499595}
+  - component: {fileID: 2841937650192837465}
+  - component: {fileID: 5619384720165983471}
+  - component: {fileID: 7392081654738291056}
+  - component: {fileID: 4183726059481937265}
+  - component: {fileID: 6058931742659083174}
   m_Layer: 0
   m_Name: "Hero_Bahad\u0131r"
   m_TagString: Untagged
@@ -123,7 +245,8 @@ MonoBehaviour:
     m_Bits: 256
   isoCamera: {fileID: 0}
   spriteDirection: {fileID: 997633108523598759}
-  attackRadius: 0.9
+  weaponVisual: {fileID: 8857128975853223881}
+  holdThreshold: 0.18
   rollDuration: 0.25
   synergyAoePrefab: {fileID: 0}
   skill1Cooldown: 8
@@ -240,6 +363,99 @@ MonoBehaviour:
   finalPassiveCooldownReduction: {fileID: 11400000, guid: 8a4d1c0e8a4d1c0e8a4d1c0e8a4d0008, type: 2}
   finalPassiveSpeedBuff: {fileID: 11400000, guid: 8a4d1c0e8a4d1c0e8a4d1c0e8a4d0003, type: 2}
   finalPassiveDebounceSeconds: 0.5
+--- !u!114 &6747822654850046574
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5919461068272317267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e96cb5806cb5a444bf63158ca731c6b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Heroes.ComposedBasicAttackBehaviour
+  autoFire: 1
+  section1Ability: {fileID: 11400000, guid: 62d80d876855696498cbe1f58e85eb34, type: 2}
+  section2Ability: {fileID: 11400000, guid: eb81c1682d3914f408cae2866aa7e26e, type: 2}
+  section3Ability: {fileID: 11400000, guid: d14b2e384d3b8fe40a2ab95f33e28688, type: 2}
+--- !u!114 &3832384037415499595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5919461068272317267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31c2c36466e4fe34aaceb2ff48ed18a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Abilities.BasicAttackComboTracker
+  streakN: 3
+  streakDecayWindow: 0
+  perTargetN: 5
+  perTargetDecaySeconds: 4.5
+--- !u!114 &2841937650192837465
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5919461068272317267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57d5192f16c0a894f9926c90e5723c7d, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Core.DamageModifierPipeline
+--- !u!114 &5619384720165983471
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5919461068272317267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b3266d345982529438bcf699037264a0, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.StatusEffects.StatusEffectController
+--- !u!114 &7392081654738291056
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5919461068272317267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b1e4f6a2d8c5730b1f4e9a6c3d7285b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Heroes.Bahadir.BahadirRollController
+--- !u!114 &4183726059481937265
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5919461068272317267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f7a4e91b6d83c5091e8f2a4c7d63b9e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Heroes.Bahadir.BahadirGhostController
+  rescanInterval: 0.25
+--- !u!114 &6058931742659083174
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5919461068272317267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c9e6a72f4d81b5093c6a8e4f7b2d519, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Heroes.Bahadir.BahadirStealthGuard
 --- !u!1 &7017064909612548309
 GameObject:
   m_ObjectHideFlags: 0
@@ -271,7 +487,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1200919854592077566}
   m_Father: {fileID: 1613796972434656250}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &4585818337916842098
@@ -371,3 +588,35 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Utilities.SpriteBillboard
   matchCameraTilt: 1
+--- !u!1 &8081448149337819459
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1200919854592077566}
+  m_Layer: 0
+  m_Name: WeaponPivotSocket
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1200919854592077566
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8081448149337819459}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5597640315675729839}
+  m_Father: {fileID: 5918424094433529661}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

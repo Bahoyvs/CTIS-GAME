@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CBuilding.StatusEffects.SpywareMarkEffectSO
   effectId: Fx_Spyware
   displayName: Spyware Mark
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: d14868e1abe5f2642b16414c3679001e, type: 3}
   isDebuff: 1
   duration: 6
   tickInterval: 1

@@ -2,8 +2,12 @@ namespace CBuilding.Abilities
 {
     /// <summary>
     /// GS-9.2 — the standard slot contract shared by all 8 heroes.
-    /// (BasicAttack and Roll stay on BaseHero/HeroController — they are not
-    /// cooldown-gated abilities in the GDD sense.)
+    /// (Roll stays on BaseHero/HeroController — it is not a cooldown-gated
+    /// ability in the GDD sense.)
+    ///
+    /// GS-17: BasicAttack IS a slot now, so CooldownManager owns its clock like
+    /// every other ability. Its duration is re-read from
+    /// Stats.GetStat(StatType.AttackCooldown) on every trigger — never baked.
     /// </summary>
     public enum AbilitySlot : byte
     {
@@ -12,7 +16,8 @@ namespace CBuilding.Abilities
         FinalPassive,
         Skill1,
         Skill2,
-        Ultimate
+        Ultimate,
+        BasicAttack   // GS-17 — cooldown re-read from Stats every trigger
     }
 
     /// <summary>

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CBuilding.StatusEffects.EffectDataSO
   effectId: Fx_SpeedBuff
   displayName: Speed Buff
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: f8fd2177cc803ee4ab5d1e359c1e85ae, type: 3}
   isDebuff: 0
   duration: 4
   tickInterval: 0

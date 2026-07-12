@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CBuilding.StatusEffects.EffectDataSO
   effectId: Fx_Slow
   displayName: Slow
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 4d7e2e000a7d96a45856d99a5974594c, type: 3}
   isDebuff: 1
   duration: 3
   tickInterval: 0

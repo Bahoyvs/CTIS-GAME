@@ -27,6 +27,7 @@ namespace CBuilding.Abilities.Delivery
         private float _traveled;
         private float _lifetime;
         private int _hitsLeft;
+        private bool _retargeted; // GS-17 rec #12 — one snap per projectile, not continuous homing
         private readonly HashSet<GameObject> _alreadyHit = new();
 
         /// <summary>Server-only. Call BEFORE NetworkObject.Spawn().</summary>
@@ -50,15 +51,74 @@ namespace CBuilding.Abilities.Delivery
             if (_settings == null) return;
 
             float step = _settings.speed * Time.deltaTime;
+
+            // GS-17 §7.2 canPierceWalls — Pierce Bolt S3 flies through terrain; everyone
+            // else detonates on the wall they were about to cross this frame.
+            if (!_settings.canPierceWalls && _settings.wallLayers != 0 &&
+                Physics.Raycast(transform.position, _direction, out RaycastHit wallHit, step + hitRadius,
+                    _settings.wallLayers, QueryTriggerInteraction.Ignore))
+            {
+                transform.position = wallHit.point - _direction * hitRadius * 0.5f;
+                Detonate();
+                return;
+            }
+
             transform.position += _direction * step;
             _traveled += step;
             _lifetime += Time.deltaTime;
 
+            TryApproachRetarget();
             CheckHits();
 
             if (_settings != null && (_traveled >= _settings.maxRange || _lifetime >= maxLifetime))
             {
                 Detonate(); // explosion at end-of-range (0 radius = nothing) + despawn
+            }
+        }
+
+        /// <summary>
+        /// GS-17 rec #12 — cone-limited retarget-on-approach (Rapid Needle S3), NOT true
+        /// homing. Only in the last retargetWindowFraction of the flight, only once, only
+        /// toward a valid enemy within a tight cone/radius: forgives a near-miss without
+        /// deleting the aim skill the weapon rig is built around.
+        /// </summary>
+        private void TryApproachRetarget()
+        {
+            if (_retargeted || !_settings.retargetOnApproach) return;
+            if (_traveled < _settings.maxRange * (1f - _settings.retargetWindowFraction)) return;
+
+            int count = Physics.OverlapSphereNonAlloc(
+                transform.position, _settings.retargetRadius, Buffer, _settings.hitLayers,
+                QueryTriggerInteraction.Collide);
+
+            GameObject best = null;
+            float bestAngle = _settings.retargetConeDeg;
+            Vector3 bestPos = Vector3.zero;
+
+            for (int i = 0; i < count; i++)
+            {
+                GameObject root = AbilityTargeting.ResolveRoot(Buffer[i]);
+                if (root == null || root == _caster || _alreadyHit.Contains(root)) continue;
+                if (!AbilityTargeting.PassesFilter(root, _caster, _ability.teamFilter)) continue;
+
+                Vector3 to = root.transform.position - transform.position;
+                to.y = 0f;
+                if (to.sqrMagnitude < 0.01f) continue;
+
+                float angle = Vector3.Angle(_direction, to);
+                if (angle < bestAngle)
+                {
+                    bestAngle = angle;
+                    best = root;
+                    bestPos = to;
+                }
+            }
+
+            if (best != null)
+            {
+                _retargeted = true;
+                _direction = bestPos.normalized;
+                transform.rotation = Quaternion.LookRotation(_direction);
             }
         }
 

@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Heroes.Bahadir.BahadirSkill2DataSO
   abilityId: Ability_Bahadir_Skill2
   displayName: Skill2
-  description: Charge-based mark shot; a marked kill refunds CD and opens a chain window.
-  icon: {fileID: 0}
+  description: Charge-based mark shot; a marked kill refunds CD and opens a chain
+    window.
+  icon: {fileID: 21300000, guid: d14868e1abe5f2642b16414c3679001e, type: 3}
   mode: 3
   cooldown: 8
   channelDuration: 0

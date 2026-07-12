@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Heroes.Bahadir.BahadirUltimateDataSO
   abilityId: Ability_Bahadir_Ultimate
   displayName: Ultimate
-  description: Channel + self-root; on completion, newly spawned enemies nearby are Spyware-marked.
-  icon: {fileID: 0}
+  description: Channel + self-root; on completion, newly spawned enemies nearby are
+    Spyware-marked.
+  icon: {fileID: 21300000, guid: bd04a4caa10fdbe40ab1b99b876a4535, type: 3}
   mode: 1
   cooldown: 60
   channelDuration: 3

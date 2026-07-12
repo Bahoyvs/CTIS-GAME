@@ -1,5 +1,8 @@
 using System;
+using System;
 using System.Collections.Generic;
+using CBuilding.Core;
+using CBuilding.Heroes;
 using CBuilding.StatusEffects;
 using Unity.Netcode;
 using UnityEngine;
@@ -32,6 +35,7 @@ namespace CBuilding.Abilities
         private readonly CooldownManager _cooldowns = new();
 
         private StatusEffectController _status;
+        private BaseHero _hero;
 
         // Channel state (one channel at a time per entity)
         private AbilitySlot _channelSlot;
@@ -72,6 +76,7 @@ namespace CBuilding.Abilities
         private void Awake()
         {
             _status = GetComponent<StatusEffectController>();
+            _hero = GetComponent<BaseHero>();
         }
 
         public override void OnNetworkSpawn()
@@ -183,6 +188,7 @@ namespace CBuilding.Abilities
             if (!_runtimes.TryGetValue(slot, out var runtime)) return;
 
             var data = runtime.Data;
+            string casterName = _hero != null ? _hero.DisplayName : gameObject.name;
 
             // Toggle-off is always allowed (even while silenced, ending a toggle is safe).
             if (data.mode == AbilityMode.Toggle && _toggledOn.Contains(slot))
@@ -190,17 +196,36 @@ namespace CBuilding.Abilities
                 _toggledOn.Remove(slot);
                 runtime.ToggleEnd();
                 _cooldowns.Commit(slot, data.cooldown); // cooldown starts on toggle-off
+                CombatLogManager.LogAbilityToggle(casterName, data.displayName, false, transform.position);
                 return;
             }
 
             // Gating (GS-5 integration).
-            if (data.blockedBySilence && _status != null && !_status.CanUseAbilities) return;
-            if (!_cooldowns.IsReady(slot)) return;
-            if (_isChanneling) return; // one channel at a time; also blocks casts mid-channel
+            if (data.blockedBySilence && _status != null && !_status.CanUseAbilities)
+            {
+                CombatLogManager.LogAbilityBlocked(casterName, data.displayName, "Silenced");
+                return;
+            }
+
+            if (!_cooldowns.IsReady(slot))
+            {
+                CombatLogManager.LogAbilityBlocked(casterName, data.displayName, "Cooldown Active");
+                return;
+            }
+
+            if (_isChanneling)
+            {
+                CombatLogManager.LogAbilityBlocked(casterName, data.displayName, "Already Channeling");
+                return; // one channel at a time; also blocks casts mid-channel
+            }
 
             CurrentAimPoint = aimPoint; // available to CanActivate/Execute (range checks, delivery)
 
-            if (!runtime.CanActivate()) return;
+            if (!runtime.CanActivate())
+            {
+                CombatLogManager.LogAbilityBlocked(casterName, data.displayName, "Cannot Activate");
+                return;
+            }
 
             switch (data.mode)
             {
@@ -208,11 +233,13 @@ namespace CBuilding.Abilities
                 case AbilityMode.ChargeBased:
                     runtime.Execute();
                     _cooldowns.Commit(slot, data.cooldown);
+                    CombatLogManager.LogAbilityActivated(casterName, data.displayName, data.mode.ToString(), aimPoint);
                     break;
 
                 case AbilityMode.Toggle:
                     _toggledOn.Add(slot);
                     runtime.Execute(); // toggle ON; no cooldown yet
+                    CombatLogManager.LogAbilityToggle(casterName, data.displayName, true, transform.position);
                     break;
 
                 case AbilityMode.Channel:
@@ -220,6 +247,7 @@ namespace CBuilding.Abilities
                     _channelSlot = slot;
                     _channelRemaining = data.channelDuration;
                     runtime.Execute(); // channel start
+                    CombatLogManager.LogAbilityChannelStart(casterName, data.displayName, data.channelDuration, aimPoint);
                     break;
             }
 
@@ -236,6 +264,10 @@ namespace CBuilding.Abilities
 
             _isChanneling = false;
             var runtime = _runtimes[slot];
+            string casterName = _hero != null ? _hero.DisplayName : gameObject.name;
+
+            CombatLogManager.LogAbilityChannelEnd(casterName, runtime.Data.displayName, completed, transform.position);
+
             runtime.ChannelEnd(completed);
             _cooldowns.Commit(slot, runtime.Data.cooldown);
             if (cooldownRefund > 0f)

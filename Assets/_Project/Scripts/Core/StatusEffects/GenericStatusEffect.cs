@@ -67,10 +67,12 @@ namespace CBuilding.StatusEffects
 
         // ---- IDamageModifier (GS-5.4) ----
 
-        /// <summary>Multiplicative band (see IDamageModifier priority convention).</summary>
-        public int Priority => 100;
+        /// <summary>Multiplicative band (see IDamageModifier priority convention). Virtual so
+        /// bespoke subclasses (e.g. Bahadır's melee-invincibility) can move into the 200+
+        /// "clamps" band instead of the default multiplicative one.</summary>
+        public virtual int Priority => 100;
 
-        public float Modify(in DamageInfo info, float currentAmount)
+        public virtual float Modify(in DamageInfo info, float currentAmount)
         {
             float multiplier = info.IsHealing ? Data.incomingHealMultiplier : Data.incomingDamageMultiplier;
             if (Mathf.Approximately(multiplier, 1f)) return currentAmount;
