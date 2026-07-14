@@ -15,6 +15,9 @@ MonoBehaviour:
   HeroName: Gobluna
   Description: Guardian - Ranged - Fate (Siphoner)
   Role: 3
+  Icon: {fileID: 1514985620, guid: 48248f6c679cb074f8a8e283d515b061, type: 3}
+  LobbyAvatarPrefab: {fileID: 5919461068272317267, guid: daa7f3ac8f08b1b48951b7993e8b05e1, type: 3}
+  GameplayPrefab: {fileID: 5919461068272317267, guid: daa7f3ac8f08b1b48951b7993e8b05e1, type: 3}
   MaxHealth: 900
   Armor: 0
   MoveSpeed: 6

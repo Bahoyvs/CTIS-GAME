@@ -29,6 +29,16 @@ namespace CBuilding.Data
         [Tooltip("GDD class — drives HUD class color coding (GS-16).")]
         public HeroRole Role = HeroRole.DPS;
 
+        [Header("Presentation (Lobby & UI)")]
+        [Tooltip("Portrait used in the lobby roster grid and top-bar slots.")]
+        public Sprite Icon;
+        [Tooltip("Visual-only prefab shown at the lobby desks: SpriteRenderer/Animator only, " +
+                 "NO NetworkObject, NO controllers. Falls back to a bare Icon sprite if empty.")]
+        public GameObject LobbyAvatarPrefab;
+        [Tooltip("The real networked hero prefab spawned in GameScene (must be a registered " +
+                 "Network Prefab). Read by PlayerSpawner via LobbyNetworkManager.HeroSelections.")]
+        public GameObject GameplayPrefab;
+
         [Header("Vitals")]
         [Min(1f)] public float MaxHealth = 100f;
         [Min(0f)] public float Armor = 0f;

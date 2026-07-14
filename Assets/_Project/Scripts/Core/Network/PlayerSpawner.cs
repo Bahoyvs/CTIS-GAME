@@ -1,3 +1,5 @@
+using CBuilding.Data;
+using CBuilding.Lobby;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -5,22 +7,16 @@ using UnityEngine;
 namespace CBuilding.Network
 {
     /// <summary>
-    /// Server-side player spawning. Runs ONLY on the server: when a client connects
-    /// (including the host's own local client), instantiate their hero and hand them
-    /// ownership via SpawnAsPlayerObject — that is what makes IsOwner true on exactly
-    /// one machine per hero.
-    ///
-    /// SETUP: scene object in the gameplay scene. Assign the hero prefab (must be a
-    /// registered Network Prefab with NetworkObject + ClientNetworkTransform) and 4
-    /// spawn point transforms. NetworkManager's built-in "Player Prefab" slot stays
-    /// EMPTY so NGO doesn't double-spawn.
+    /// Server-side player spawning updated for Lobby Architecture.
+    /// Runs ONLY on the server: when a client connects (or when scene switches from Lobby),
+    /// reads their selected hero ID from LobbyNetworkManager, pulls the correct prefab 
+    /// from HeroCatalogSO, and assigns ownership.
     /// </summary>
     public class PlayerSpawner : MonoBehaviour
     {
-        [Header("Prefabs")]
-        [Tooltip("MVP: every player gets the same hero. Later: per-player hero selection " +
-                 "sent during connection approval payload.")]
-        [SerializeField] private NetworkObject heroPrefab;
+        [Header("Data")]
+        [Tooltip("Lobi seçimlerini çözmek için kullanılan kahraman veri kataloğu.")]
+        [SerializeField] private HeroCatalogSO heroCatalog;
 
         [Header("Spawn Points")]
         [SerializeField] private List<Transform> spawnPoints = new();
@@ -36,14 +32,24 @@ namespace CBuilding.Network
                 return;
             }
 
+            if (heroCatalog == null)
+            {
+                Debug.LogError("[PlayerSpawner] Hero Catalog is missing! Assign it in the Inspector.", this);
+                return;
+            }
+
             nm.OnClientConnectedCallback += HandleClientConnected;
 
             // Edge case: server already running before this scene object woke up
             // (host started in menu scene, then scene-switched here). Spawn for
             // everyone already connected.
             if (nm.IsServer)
+            {
                 foreach (NetworkClient client in nm.ConnectedClientsList)
+                {
                     SpawnHeroFor(client.ClientId);
+                }
+            }
         }
 
         private void OnDestroy()
@@ -70,12 +76,32 @@ namespace CBuilding.Network
                 ? spawnPoints[_nextSpawnIndex++ % spawnPoints.Count]
                 : transform;
 
-            // Plain Instantiate is local-only; Spawn*() is what replicates the object.
+            // 1. Lobide kaydedilen snapshot verilerinden bu oyuncunun seçtiği Hero ID'sini çek.
+            // Eğer doğrudan sahneyi test ediyorsak ve lobi kaydı yoksa fallback olarak ilk kahramanı (0) seç.
+            int heroId = LobbyNetworkManager.HeroSelections.TryGetValue(clientId, out int id) ? id : 0;
+
+            // 2. ID'yi kullanarak katalogdan doğru karakter verisini bul ve üzerindeki asıl oynanabilir "GameplayPrefab"ı al.
+            var heroData = heroCatalog.GetHero(heroId);
+            if (heroData == null || heroData.GameplayPrefab == null)
+            {
+                Debug.LogError($"[PlayerSpawner] Cannot spawn hero! Hero Data or Gameplay Prefab is null for Hero ID: {heroId}");
+                return;
+            }
+
+            NetworkObject heroPrefab = heroData.GameplayPrefab.GetComponent<NetworkObject>();
+            if (heroPrefab == null)
+            {
+                Debug.LogError($"[PlayerSpawner] The Gameplay Prefab assigned to Hero ID {heroId} does not have a NetworkObject component!");
+                return;
+            }
+
+            // 3. Dinamik olarak seçilen doğru prefab'ı doğur (Instantiate)
             NetworkObject hero = Instantiate(heroPrefab, point.position, Quaternion.identity);
+
             // destroyWithScene:true — heroes die with the gameplay scene on scene switch.
             hero.SpawnAsPlayerObject(clientId, destroyWithScene: true);
 
-            Debug.Log($"[Server] Spawned hero for client {clientId} at {point.position}.");
+            Debug.Log($"[Server] Spawned dynamic hero [{heroData.name}] for client {clientId} at {point.position}.");
         }
     }
 }

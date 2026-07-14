@@ -15,6 +15,9 @@ MonoBehaviour:
   HeroName: "Bahad\u0131r"
   Description: 
   Role: 2
+  Icon: {fileID: 892173734, guid: 0a1511f5c476f8a4c9aca20899fb86ad, type: 3}
+  LobbyAvatarPrefab: {fileID: 5919461068272317267, guid: 7bbb7808d710e2543bc3a1c3fe810c6d, type: 3}
+  GameplayPrefab: {fileID: 5919461068272317267, guid: 7bbb7808d710e2543bc3a1c3fe810c6d, type: 3}
   MaxHealth: 1000
   Armor: 0
   MoveSpeed: 6
