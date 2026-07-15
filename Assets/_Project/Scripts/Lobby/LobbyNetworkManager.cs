@@ -220,6 +220,8 @@ namespace CBuilding.Lobby
         public void StartGame()
         {
             if (!IsServer) return;
+            // 2-4 oyuncu kuralı (Systems Design 2026-07-15, madde 3) — hardcoded 4 değil.
+            if (_players.Count < Network.NetworkGameManager.MinPlayers) return;
             if (!AreAllPlayersReady()) return; // UI should prevent this; server re-checks anyway
 
             HeroSelections.Clear();

@@ -140,6 +140,30 @@ namespace CBuilding.Heroes
             // MVP: leave the body; co-op down/revive flow (GDD roguelite death rules) hooks in here.
         }
 
+        /// <summary>Fired on EVERY peer after a section-transition revival (GS-2 GDD rule:
+        /// "boss dies → all dead players revive at full HP"). Spectate-exit / re-enable
+        /// visuals hook — the presentation mirror of OnDied.</summary>
+        public event Action<BaseHero> OnRevived;
+
+        /// <summary>
+        /// SERVER-ONLY. Section transition revival: restore to full HP and announce to all
+        /// peers. No-op if already alive. NOT for mid-combat healing — use ServerHeal (which
+        /// deliberately refuses dead targets and runs the anti-heal pipeline).
+        /// </summary>
+        public void ServerReviveFullHealth()
+        {
+            if (!IsServer || IsAlive) return;
+            _netHealth.Value = Stats.GetStat(StatType.MaxHealth);
+            CombatLogManager.LogAction(DisplayName, "was", "revived", transform.position);
+            RevivedClientRpc();
+        }
+
+        [ClientRpc]
+        private void RevivedClientRpc()
+        {
+            OnRevived?.Invoke(this);
+        }
+
         // ---------------------------------------------------------------- Server-side mutators
         // These are the ONLY entry points for other systems (AoE, items, enemy AI) to touch
         // replicated hero state. Public but self-guarding — safe to call from anywhere.

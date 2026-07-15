@@ -29,7 +29,7 @@ namespace CBuilding.Enemies.Spawning
     /// SETUP: one instance per gameplay scene with a NetworkObject. Assign all
     /// SectionEncounterSOs; the director follows SectionManager.CurrentSection.
     /// </summary>
-    public class SpawnDirector : NetworkBehaviour
+    public class SpawnDirector : NetworkBehaviour, ISpawnDirectorRouting
     {
         public static SpawnDirector Instance { get; private set; }
 
@@ -71,6 +71,11 @@ namespace CBuilding.Enemies.Spawning
 
         // ---- Server-only state ----
         private SectionEncounterSO _encounter;
+
+        // ---- Finale routing (ISpawnDirectorRouting — mimari doküman §4/§5) ----
+        private SpawnDirectorMode _routingMode = SpawnDirectorMode.Normal;
+        private readonly HashSet<ulong> _targetPool = new(); // EscapeCorridorOnly'de hedef Runner'lar
+        private int _activeFloor = -1;                       // -1 = kat filtresi kapalı
         private readonly Dictionary<BaseEnemy, float> _threatByEnemy = new();   // alive -> cost
         private readonly Dictionary<BaseEnemy, int> _aliveByPrefab = new();     // prefab -> count
         private readonly Dictionary<BaseEnemy, BaseEnemy> _prefabByEnemy = new(); // instance -> prefab
@@ -140,6 +145,10 @@ namespace CBuilding.Enemies.Spawning
 
         private void HandleSectionChanged(int section)
         {
+            // Finale'de encounter'ı FinaleManager kat bazlı override eder — section-liste
+            // seçimi devre dışı (section zaten 4'te sabit kalır, bu guard savunmacıdır).
+            if (_routingMode == SpawnDirectorMode.EscapeCorridorOnly) return;
+
             _encounter = null;
             foreach (SectionEncounterSO so in encounters)
             {
@@ -189,6 +198,87 @@ namespace CBuilding.Enemies.Spawning
             }
 
             TickGuiltSpawns();
+        }
+
+        // ------------------------------------------------------------------ ISpawnDirectorRouting (SERVER)
+
+        /// <inheritdoc/>
+        public void SetMode(SpawnDirectorMode mode)
+        {
+            if (!IsServer || _routingMode == mode) return;
+            _routingMode = mode;
+
+            if (mode == SpawnDirectorMode.Normal)
+            {
+                // Finale bitti/iptal: filtreleri sıfırla, kayıtlı düşmanları temizle,
+                // section-tabanlı encounter seçimine geri dön.
+                _targetPool.Clear();
+                _activeFloor = -1;
+                ServerDespawnAllRegistered();
+                HandleSectionChanged(SectionManager.CurrentSection);
+            }
+        }
+
+        /// <inheritdoc/>
+        public void RegisterTargetPool(IReadOnlyList<ulong> clientIds)
+        {
+            if (!IsServer) return;
+            _targetPool.Clear();
+            if (clientIds == null) return;
+            for (int i = 0; i < clientIds.Count; i++) _targetPool.Add(clientIds[i]);
+        }
+
+        /// <inheritdoc/>
+        public void SetActiveFloor(int floorIndex)
+        {
+            if (!IsServer || _activeFloor == floorIndex) return;
+            _activeFloor = floorIndex;
+
+            // 5 katlı bina + hızlı tempo: önceki katın setini ayakta tutmak gereksiz yük —
+            // kayıtlı tüm düşmanlar despawn edilir, yeni kat kendi setiyle dolar (doküman Not 1).
+            ServerDespawnAllRegistered();
+        }
+
+        /// <summary>
+        /// FinaleManager kat başına encounter atar (section listesi yerine). null = spawn durur.
+        /// Section değişimi gelirse liste tabanlı seçim override'ı ezer (Finale'de section sabit 4).
+        /// </summary>
+        public void ServerSetEncounterOverride(SectionEncounterSO encounter)
+        {
+            if (!IsServer) return;
+            _encounter = encounter;
+            _attention = 0f;
+            _nextGuiltSpawnByClient.Clear();
+            if (_encounter != null)
+                _nextSpawnTime = Time.time + Random.Range(_encounter.spawnInterval.x, _encounter.spawnInterval.y);
+        }
+
+        /// <summary>EscapeCorridorOnly'de yalnızca target pool'daki client'lar hedef/mesafe referansıdır.</summary>
+        private bool IsTargetClient(ulong clientId) =>
+            _routingMode == SpawnDirectorMode.Normal || _targetPool.Contains(clientId);
+
+        private bool NodeMatchesActiveFloor(SpawnNode node)
+        {
+            if (_activeFloor < 0) return true;
+            return node.TryGetComponent(out FloorSpawnNodeTag tag) && tag.FloorIndex == _activeFloor;
+        }
+
+        private void ServerDespawnAllRegistered()
+        {
+            if (_threatByEnemy.Count == 0) { _usedThreat = 0f; return; }
+
+            List<BaseEnemy> toRemove = new(_threatByEnemy.Keys);
+            foreach (BaseEnemy enemy in toRemove)
+            {
+                if (enemy == null) continue;
+                enemy.OnDied -= HandleEnemyDied;
+                if (enemy.NetworkObject != null && enemy.NetworkObject.IsSpawned)
+                    enemy.NetworkObject.Despawn(true); // pool handler'ı varsa oraya döner
+            }
+            _threatByEnemy.Clear();
+            _prefabByEnemy.Clear();
+            _aliveByPrefab.Clear();
+            _usedThreat = 0f;
         }
 
         // ------------------------------------------------------------------ Public API
@@ -340,6 +430,7 @@ namespace CBuilding.Enemies.Spawning
             foreach (SpawnNode node in SpawnNode.ActiveNodes)
             {
                 if ((node.NodeType & allowedTypes) == 0 || !node.IsAvailable) continue;
+                if (!NodeMatchesActiveFloor(node)) continue; // Finale: sadece aktif katın node'ları
                 if (!PassesDistanceBand(node.SpawnPosition)) continue;
                 if (useFrustumCheck && IsVisibleToAnyPlayer(node.SpawnPosition)) continue;
                 _nodeScratch.Add(node);
@@ -357,6 +448,7 @@ namespace CBuilding.Enemies.Spawning
             foreach (SpawnNode node in SpawnNode.ActiveNodes)
             {
                 if ((node.NodeType & allowedTypes) == 0 || !node.IsAvailable) continue;
+                if (!NodeMatchesActiveFloor(node)) continue; // Finale: sadece aktif katın node'ları
                 if (!PassesDistanceBand(node.SpawnPosition)) continue;
                 if (useFrustumCheck && IsVisibleToAnyPlayer(node.SpawnPosition)) continue;
 
@@ -372,7 +464,7 @@ namespace CBuilding.Enemies.Spawning
 
             foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
             {
-                if (client.PlayerObject == null) continue;
+                if (client.PlayerObject == null || !IsTargetClient(client.ClientId)) continue;
                 float dist = Vector3.Distance(pos, client.PlayerObject.transform.position);
 
                 if (dist < minSpawnDistance) return false;       // Too close to ANY player.
@@ -394,7 +486,7 @@ namespace CBuilding.Enemies.Spawning
 
             foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
             {
-                if (client.PlayerObject == null) continue;
+                if (client.PlayerObject == null || !IsTargetClient(client.ClientId)) continue;
 
                 Vector3 camPos = client.PlayerObject.transform.position + cameraOffset;
 
@@ -418,7 +510,7 @@ namespace CBuilding.Enemies.Spawning
 
             foreach (NetworkClient client in NetworkManager.Singleton.ConnectedClientsList)
             {
-                if (client.PlayerObject == null) continue;
+                if (client.PlayerObject == null || !IsTargetClient(client.ClientId)) continue;
                 if (!client.PlayerObject.TryGetComponent(out StatusEffectController status)) continue;
                 if (!status.HasEffect(_encounter.guiltMarkEffect)) continue;
 

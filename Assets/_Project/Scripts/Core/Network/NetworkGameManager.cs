@@ -20,6 +20,10 @@ namespace CBuilding.Network
     {
         public const int MaxPlayers = 4;
 
+        /// <summary>Systems Design (2026-07-15, madde 3): 2-4 oyuncu. Lobby "Start" bunu kontrol eder;
+        /// Section 4 Runner sayısı N-1 formülüyle zaten dinamiktir.</summary>
+        public const int MinPlayers = 2;
+
         public static NetworkGameManager Instance { get; private set; }
 
         /// <summary>
