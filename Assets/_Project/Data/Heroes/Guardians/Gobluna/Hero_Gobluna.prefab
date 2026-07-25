@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5597640315675729839}
   - component: {fileID: 7754995263663799583}
   - component: {fileID: 8857128975853223881}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: WeaponVisual
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -139,7 +139,9 @@ GameObject:
   - component: {fileID: 5619384720165983471}
   - component: {fileID: 7392081654738291056}
   - component: {fileID: 4183726059481937265}
-  m_Layer: 0
+  - component: {fileID: 2950894366414205341}
+  - component: {fileID: 6194136327729326068}
+  m_Layer: 7
   m_Name: Hero_Gobluna
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -453,6 +455,42 @@ MonoBehaviour:
   resourcePerHealPoint: 0.5
   passiveFillPerSecond: 1
   pruneInterval: 0.5
+--- !u!136 &2950894366414205341
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5919461068272317267}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.18
+  m_Height: 1
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &6194136327729326068
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5919461068272317267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2971999d25a14fa4085ea51d36f47800, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Economy.PlayerEconomy
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1 &7017064909612548309
 GameObject:
   m_ObjectHideFlags: 0
@@ -465,7 +503,7 @@ GameObject:
   - component: {fileID: 4585818337916842098}
   - component: {fileID: 997633108523598759}
   - component: {fileID: 6217065538934414449}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Sprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -594,7 +632,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1200919854592077566}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: WeaponPivotSocket
   m_TagString: Untagged
   m_Icon: {fileID: 0}

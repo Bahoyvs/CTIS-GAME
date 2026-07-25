@@ -572,6 +572,7 @@ GameObject:
   - component: {fileID: 4704006033893169869}
   - component: {fileID: 9100000000000000001}
   - component: {fileID: 9100000000000000002}
+  - component: {fileID: 3826763725661105520}
   m_Layer: 8
   m_Name: Zmb_SweeperClaw
   m_TagString: Untagged
@@ -630,7 +631,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 925084905
+  GlobalObjectIdHash: 156786666
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -805,6 +806,64 @@ MonoBehaviour:
   entryParticles: {fileID: 0}
   animator: {fileID: 0}
   animatorTrigger: SpawnEntry
+--- !u!114 &9100000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4950403330440671466}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5360f7227b43f38aff7b9cd0e35a775b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Enemies.EnemyShield
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &9100000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4950403330440671466}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b3be9d1536aff072051ce3f5d98c8bea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Enemies.EnemyConeAttack
+  coneAngle: 90
+  coneRange: 3
+  coneDamage: 16
+  knockbackForce: 4
+  appliedEffect: {fileID: 11400000, guid: 543d82e0b477970ee2714ae0e193f21e, type: 2}
+  puddlePrefab: {fileID: 0}
+  puddleDistance: 2
+  specialInterval: 6
+  meleeBetweenSpecials: 1
+  armOnTargetSwitch: 1
+--- !u!114 &3826763725661105520
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4950403330440671466}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f85ff20e6b279fb4781595c967a4ac81, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Economy.EnemyLootDropper
+  ShowTopMostFoldoutHeaderGroup: 1
+  pickupPrefab: {fileID: 9064091236558663768, guid: 75a335869ae57e24d91024e2057d30ad, type: 3}
+  minPoints: 5
+  maxPoints: 15
+  pointsPerPickup: 5
+  spawnHeight: 0.5
+  upwardForceMin: 0.5
+  upwardForceMax: 1.5
+  outwardForceMin: 0.2
+  outwardForceMax: 0.8
+  spinTorque: 1
 --- !u!1 &5169859963909424404
 GameObject:
   m_ObjectHideFlags: 0
@@ -880,37 +939,3 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &9100000000000000001
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4950403330440671466}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5360f7227b43f38aff7b9cd0e35a775b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Enemies.EnemyShield
---- !u!114 &9100000000000000002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4950403330440671466}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b3be9d1536aff072051ce3f5d98c8bea, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CBuilding.Enemies.EnemyConeAttack
-  coneAngle: 90
-  coneRange: 3
-  coneDamage: 16
-  knockbackForce: 4
-  appliedEffect: {fileID: 11400000, guid: 543d82e0b477970ee2714ae0e193f21e, type: 2}
-  puddlePrefab: {fileID: 0}
-  puddleDistance: 2
-  specialInterval: 6
-  meleeBetweenSpecials: 1
-  armOnTargetSwitch: 1

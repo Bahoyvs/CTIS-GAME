@@ -171,7 +171,15 @@ namespace CBuilding.Core
         private void TeleportLocalHeroRpc(Vector3 position, RpcParams rpcParams = default)
         {
             NetworkObject player = NetworkManager.LocalClient?.PlayerObject;
-            if (player != null) player.transform.position = position;
+            if (player == null) return;
+
+            CharacterController characterController = player.GetComponent<CharacterController>();
+            if (characterController != null) characterController.enabled = false;
+
+            player.transform.position = position;
+            Physics.SyncTransforms();
+
+            if (characterController != null) characterController.enabled = true;
         }
     }
 }
