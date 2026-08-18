@@ -2,8 +2,6 @@
 
 A 4-player co-op isometric action-roguelite built in Unity 6 with a fully data-driven ability system and server-authoritative combat.
 
-> 🎥 **[Insert Gameplay WebM/GIF here]**
-
 ---
 
 ## Tech Stack
